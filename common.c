@@ -122,7 +122,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   }
 
   if (sent_byte < connection->pending_send_buf_len) {
-    printf("[write_cb()]localfd: Pending send.\n");
+    // printf("[write_cb()]localfd: Pending send.\n");
     memmove(connection->pending_send_buf, connection->pending_send_buf + sent_byte, connection->pending_send_buf_len - sent_byte);
   } else if (sent_byte == connection->pending_send_buf_len) {
     free(connection->pending_send_buf);
@@ -173,7 +173,7 @@ void kcp_update_interval() {
         }
 
         if (sent_byte < recv_len) {
-          printf("[kcp_update_interval()]localfd: Pending send.\n");
+          // printf("[kcp_update_interval()]localfd: Pending send.\n");
           
           if (connection_queue[i].pending_send_buf_len == 0) {
             connection_queue[i].pending_send_buf = malloc(recv_len - sent_byte);
