@@ -81,6 +81,8 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
 
   int local_fd = accept(watcher->fd, (struct sockaddr *)&client_addr, &client_len);
 
+  setnonblocking(watcher->fd);
+
   if (local_fd < 0) {
     return;
   }
