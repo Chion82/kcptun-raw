@@ -27,6 +27,13 @@ struct connection_info {
   struct io_wrap write_io;
 };
 
+struct kcp_config {
+  int nodelay;
+  int interval;
+  int resend;
+  int nc;
+};
+
 void notify_remote_close(struct connection_info* connection);
 void close_connection(struct connection_info* connection);
 
@@ -39,6 +46,10 @@ struct ev_loop* loop;
 struct ev_io packet_recv_io;
 struct ev_timer kcp_update_timer;
 struct ev_timer heart_beat_timer;
+
+struct kcp_config kcpconfig;
+
+void init_kcp_mode(int argc, char* argv[]);
 
 unsigned int getclock();
 int setnonblocking(int fd);

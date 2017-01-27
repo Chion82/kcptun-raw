@@ -111,7 +111,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   if (connection->kcp == NULL) {
     connection->kcp = ikcp_create(connection->conv, connection);
     (connection->kcp)->output = packet_output;
-    ikcp_nodelay(connection->kcp, 1, 10, 2, 1);
+    ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
   }
 
   printf("New connection conv %d.\n", connection->conv);
@@ -161,6 +161,13 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
 int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
+
+  if (argc < 6) {
+    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LOCAL_PORT LISTEN_PORT [mode]");
+    exit(1);
+  }
+
+  init_kcp_mode(argc, argv);
 
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     connection_queue[i].in_use = 0;

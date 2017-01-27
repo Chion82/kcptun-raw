@@ -257,3 +257,39 @@ int iqueue_get_len(struct IQUEUEHEAD* queue) {
   }
   return ret;
 }
+
+void init_kcp_mode(int argc, char* argv[]) {
+  char* last_arg = argv[argc - 1];
+
+  kcpconfig.nodelay = 1;
+  kcpconfig.interval = 10;
+  kcpconfig.resend = 2;
+  kcpconfig.nc = 1;
+
+  if (!strcmp(last_arg, "normal")) {
+    printf("normal mode enabled.\n");
+    kcpconfig.nodelay = 0;
+    kcpconfig.interval = 30;
+    kcpconfig.resend = 2;
+    kcpconfig.nc = 1;
+  } else if (!strcmp(last_arg, "fast")) {
+    printf("fast mode enabled.\n");
+    kcpconfig.nodelay = 0;
+    kcpconfig.interval = 20;
+    kcpconfig.resend = 2;
+    kcpconfig.nc = 1;
+  } else if (!strcmp(last_arg, "fast2")) {
+    printf("fast2 mode enabled.\n");
+    kcpconfig.nodelay = 1;
+    kcpconfig.interval = 20;
+    kcpconfig.resend = 2;
+    kcpconfig.nc = 1;
+  } else if (!strcmp(last_arg, "fast3")) {
+    printf("fast3 mode enabled.\n");
+    kcpconfig.nodelay = 1;
+    kcpconfig.interval = 10;
+    kcpconfig.resend = 2;
+    kcpconfig.nc = 1;
+  }
+
+}
