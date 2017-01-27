@@ -146,6 +146,11 @@ void kcp_update_interval() {
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     if (connection_queue[i].in_use == 1 && connection_queue[i].kcp != NULL) {
       ikcp_update(connection_queue[i].kcp, getclock());
+
+      if (connection->pending_send_buf_len > BUFFER_SIZE * 20) {
+        continue;
+      }
+
       int recv_len = ikcp_recv(connection_queue[i].kcp, recv_buffer, BUFFER_SIZE);
       if (recv_len > 0) {
 
