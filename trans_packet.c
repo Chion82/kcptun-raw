@@ -26,7 +26,7 @@ unsigned short csum(unsigned short *ptr,int nbytes);
 
 void init_packet() {
     packet_send_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
-    packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_ALL));
+    packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_IP));
     // packet_recv_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
     if(packet_send_sd == -1 || packet_recv_sd == -1) {
         //socket creation failed, may be because of non-root privileges
