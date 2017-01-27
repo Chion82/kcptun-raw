@@ -147,7 +147,7 @@ void kcp_update_interval() {
     if (connection_queue[i].in_use == 1 && connection_queue[i].kcp != NULL) {
       ikcp_update(connection_queue[i].kcp, getclock());
 
-      if (connection->pending_send_buf_len > BUFFER_SIZE * 20) {
+      if (connection_queue[i].pending_send_buf_len > BUFFER_SIZE * 20) {
         continue;
       }
 
