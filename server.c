@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 #include <netinet/in.h>
