@@ -241,7 +241,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     }
 
     if (identifier == UINT_MAX) {
-        printf("Echo SYN, ACK back to client\n");
+        printf("Echo SYN, ACK back to client %s:%d\n", packetinfo->dest_ip, packetinfo->dest_port);
         (packetinfo->state).seq = 1;
         tcph->seq = 0;
         tcph->ack_seq = 1;
