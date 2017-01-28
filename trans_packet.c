@@ -71,12 +71,13 @@ void check_packet_recv(struct packet_info* packetinfo) {
     struct in_addr from_addr;
 
     char buffer[MTU];
+    char pseudo_tcp_buffer[MTU];
 
 
     saddr_size = sizeof(saddr);
 
     size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
-    if(size < 0 ) {
+    if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr)) {
         return;
     }
 
@@ -93,48 +94,41 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    // printf("[trans_packet]Received %d bytes packet payload.\n", size - tcph->doff*4 - iphdrlen);
+    memcpy(pseudo_tcp_buffer, buffer + iphdrlen, size - iphdrlen);
+
+    struct tcphdr* pseudo_tcp_header = (struct tcphdr*)pseudo_tcp_buffer;
+    pseudo_tcp_header->check = 0;
+
+    struct pseudo_header psh;
+
+    int payloadlen = size - tcph->doff*4 - iphdrlen;
+
+    short unsigned int *pseudogram = malloc(sizeof(struct pseudo_header) + sizeof(struct tcphdr) + payloadlen);
+
+
+    psh.source_address = iph->saddr;
+    psh.dest_address = iph->daddr;
+    psh.placeholder = 0;
+    psh.protocol = IPPROTO_TCP;
+    psh.tcp_length = htons(sizeof(struct tcphdr) + payloadlen );
+
+    memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
+    memcpy(pseudogram + sizeof(struct pseudo_header), pseudo_tcp_buffer, size - iphdrlen);
+
+    unsigned short tcp_checksum = csum(pseudogram, sizeof(struct pseudo_header) + size - iphdrlen);
+
+    free(pseudogram);
+
+    if (tcp_checksum != tcph->check) {
+        printf("[trans_packet]TCP checksum failed.\n");
+        return;
+    }
+
 
     from_addr.s_addr = iph->saddr;
 
-    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4, size - tcph->doff*4 - iphdrlen, tcph->seq);
-}
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4, payloadlen, tcph->seq);
 
-void recv_packet_loop(struct packet_info* packetinfo) {
-    int saddr_size , size;
-    struct sockaddr saddr;
-    unsigned short iphdrlen;
-
-    struct in_addr from_addr;
-
-    char buffer[MTU];
-
-    while(1) {
-        saddr_size = sizeof(saddr);
-
-        size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
-        if(size < 0 ) {
-            continue;
-        }
-
-        struct iphdr *iph = (struct iphdr *)buffer;
-        iphdrlen =iph->ihl*4;
-
-        if (iph->protocol != IPPROTO_TCP) {
-            continue;
-        }
-
-        struct tcphdr *tcph=(struct tcphdr*)(buffer + iphdrlen);
-
-        if (ntohs(tcph->dest) != packetinfo->source_port) {
-            continue;
-        }
-
-        from_addr.s_addr = iph->saddr;
-
-        (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4, size - tcph->doff*4 - iphdrlen, tcph->seq);
-
-    }
 }
 
 int send_packet(struct packet_info* packetinfo, char* payload, int payloadlen, unsigned int seq) {
