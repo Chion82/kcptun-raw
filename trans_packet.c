@@ -231,14 +231,17 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     tcph->urg_ptr = 0;
 
     if ((packetinfo->state).init == 1) {
-        (packetinfo->state).init = 0;
+        (packetinfo->state).seq = 1;
         tcph->seq = 0;
+        tcph->ack = 0;
         tcph->syn = 1;
         tcph->ack_seq = 0;
         tcph->psh=0;
     }
 
     if (identifier == UINT_MAX) {
+        printf("Echo SYN, ACK back to client\n");
+        (packetinfo->state).seq = 1;
         tcph->seq = 0;
         tcph->ack_seq = 1;
         tcph->syn = 1;
@@ -273,6 +276,10 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         free(payload);
 
         ((packetinfo->state).seq) += (iph->tot_len - iph->ihl*4 - tcph->doff*4);
+    }
+
+    if ((packetinfo->state).init == 1) {
+        (packetinfo->state).init = 0;
     }
 
     return ret;
