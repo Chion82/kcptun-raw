@@ -121,7 +121,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     free(pseudogram);
 
     if (tcp_checksum != tcph->check) {
-        printf("[trans_packet]TCP checksum failed.\n");
+        // printf("[trans_packet]TCP checksum failed.\n");
         return;
     }
 

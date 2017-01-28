@@ -9,13 +9,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <linux/netfilter_ipv4.h>
 #include <ev.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
 #include <sys/time.h>
 
 #include "ikcp.h"
