@@ -146,6 +146,12 @@ void kcp_update_interval() {
     if (connection_queue[i].in_use == 1 && connection_queue[i].kcp != NULL) {
       ikcp_update(connection_queue[i].kcp, getclock());
 
+      if (iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) > 20) {
+        ev_io_stop(loop, &((connection_queue[i].read_io).io));
+      } else {
+        ev_io_start(loop, &((connection_queue[i].read_io).io));
+      }
+
       if (connection_queue[i].pending_send_buf_len > BUFFER_SIZE * 20) {
         continue;
       }
