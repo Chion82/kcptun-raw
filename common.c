@@ -105,6 +105,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   }
 
   if (connection->pending_send_buf_len == 0 || connection->pending_send_buf == NULL) {
+    ev_io_stop(loop, watcher);
     return;
   }
 

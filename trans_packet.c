@@ -71,8 +71,6 @@ void check_packet_recv(struct packet_info* packetinfo) {
     struct in_addr from_addr;
 
     char buffer[MTU];
-    char pseudo_tcp_buffer[MTU];
-
 
     saddr_size = sizeof(saddr);
 
@@ -94,6 +92,10 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
+    // verify TCP checksum
+
+    char pseudo_tcp_buffer[MTU];
+
     memcpy(pseudo_tcp_buffer, buffer + iphdrlen, size - iphdrlen);
 
     struct tcphdr* pseudo_tcp_header = (struct tcphdr*)pseudo_tcp_buffer;
@@ -104,7 +106,6 @@ void check_packet_recv(struct packet_info* packetinfo) {
     int payloadlen = size - tcph->doff*4 - iphdrlen;
 
     char *pseudogram = malloc(sizeof(struct pseudo_header) + sizeof(struct tcphdr) + payloadlen);
-
 
     psh.source_address = iph->saddr;
     psh.dest_address = iph->daddr;
