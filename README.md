@@ -1,6 +1,6 @@
 kcptun-raw
 ----------
-为缓解部分ISP对UDP断流的问题，通过伪造TCP报文，重新实现了 [kcptun](https://github.com/xtaci/kcptun) 。  
+为缓解部分ISP对UDP断流的问题，通过伪造TCP报文，实现了[kcptun](https://github.com/xtaci/kcptun)的最基本功能。目前只实现了最基本的明文tunnel。  
 客户端到服务端的底层通信方式为带伪TCP报头的IP packet，通过raw socket实现。
 
 Inspired by [linhua55/some_kcptun_tools/relayRawSocket](https://github.com/linhua55/some_kcptun_tools/tree/master/relayRawSocket) .
