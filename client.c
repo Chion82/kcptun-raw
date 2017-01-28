@@ -195,7 +195,7 @@ int main(int argc, char* argv[]) {
 
   struct ev_io w_accept;
 
-  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.003, 0.003);
+  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.01, 0.01);
   ev_timer_start(loop, &kcp_update_timer);
 
   int server_fd = init_server_socket();
