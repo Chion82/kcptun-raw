@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 
   tcp_listen_port = atoi(argv[5]);
 
-  init_packet();
+  init_packet(&packetinfo);
   set_packet_recv_nonblocking();
 
   loop = ev_default_loop(0);

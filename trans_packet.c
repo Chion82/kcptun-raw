@@ -1,5 +1,6 @@
 #include <stdio.h> //for printf
 #include <string.h> //memset
+#include <limits.h>
 #include <sys/socket.h>    //for socket ofcourse
 #include <sys/types.h>
 #include <stdlib.h> //for exit(0);
@@ -24,7 +25,7 @@ struct pseudo_header {
 
 unsigned short csum(unsigned short *ptr,int nbytes);
 
-void init_packet() {
+void init_packet(struct packet_info* packetinfo) {
     packet_send_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
     packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_IP));
     // packet_recv_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
@@ -41,6 +42,16 @@ void init_packet() {
         perror("Error setting IP_HDRINCL");
         exit(2);
     }
+
+    (packetinfo->state).seq = 0;
+    (packetinfo->state).ack = 1;
+
+    if (packetinfo->is_server) {
+        (packetinfo->state).init = 0;
+    } else {
+        (packetinfo->state).init = 1;
+    }
+
 }
 
 void set_packet_recv_nonblocking() {
@@ -75,7 +86,8 @@ void check_packet_recv(struct packet_info* packetinfo) {
     saddr_size = sizeof(saddr);
 
     size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
-    if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
+    
+    if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr)) {
         return;
     }
 
@@ -86,9 +98,26 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
+    from_addr.s_addr = iph->saddr;
+
     struct tcphdr *tcph=(struct tcphdr*)(buffer + iphdrlen);
 
     if (ntohs(tcph->dest) != packetinfo->source_port) {
+        return;
+    }
+
+    if(size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
+        // Server reply SYN + ACK
+        if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
+            (packetinfo->state).seq = 0;
+            (packetinfo->state).ack = 1;
+            struct packet_info tmp_packetinfo;
+            memcpy(&tmp_packetinfo, packetinfo, sizeof(struct packet_info));
+            strcpy(tmp_packetinfo.dest_ip, inet_ntoa(from_addr));
+            tmp_packetinfo.dest_port = ntohs(tcph->source);
+            send_packet(&tmp_packetinfo, "", 0, UINT_MAX);
+        }
+
         return;
     }
 
@@ -125,8 +154,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-
-    from_addr.s_addr = iph->saddr;
+    (packetinfo->state).ack += payloadlen;
 
     unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
 
@@ -143,11 +171,15 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         return -1;
     }
 
-    char* payload = malloc(source_payloadlen + 4);
-    memcpy(payload, &identifier, 4);
-    memcpy(payload + 4, source_payload, source_payloadlen);
+    char* payload = "";
+    int payloadlen = 0;
 
-    int payloadlen = source_payloadlen + 4;
+    if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
+        payload = malloc(source_payloadlen + 4);
+        memcpy(payload, &identifier, 4);
+        memcpy(payload + 4, source_payload, source_payloadlen);
+        payloadlen = source_payloadlen + 4;
+    }
 
     //zero out the packet buffer
     memset (datagram, 0, MTU);
@@ -185,21 +217,33 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     //TCP Header
     tcph->source = htons(packetinfo->source_port);
     tcph->dest = sin.sin_port;
-    tcph->seq = 0;
-    tcph->ack_seq = 0;
+    tcph->seq = ((packetinfo->state).seq);
+    tcph->ack_seq = ((packetinfo->state).ack);
     tcph->doff = 5;  //tcp header size
     tcph->fin=0;
-    tcph->syn=1;
+    tcph->syn=0;
     tcph->rst=0;
-    tcph->psh=0;
-    tcph->ack=0;
+    tcph->psh=1;
+    tcph->ack=1;
     tcph->urg=0;
     tcph->window = htons (5840); /* maximum allowed window size */
     tcph->check = 0; //leave checksum 0 now, filled later by pseudo header
     tcph->urg_ptr = 0;
 
-    if (packetinfo->is_server) {
-        tcph->ack=1;
+    if ((packetinfo->state).init == 1) {
+        (packetinfo->state).init = 0;
+        tcph->seq = 0;
+        tcph->syn = 1;
+        tcph->ack_seq = 0;
+        tcph->psh=0;
+    }
+
+    if (identifier == UINT_MAX) {
+        tcph->seq = 0;
+        tcph->ack_seq = 1;
+        tcph->syn = 1;
+        tcph->ack = 1;
+        tcph->psh=0;
     }
 
     //Now the TCP checksum
@@ -225,7 +269,11 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     int ret = sendto (packet_send_sd, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin));
 
     // printf("[trans_packet]Sent %d bytes packet.\n", ret);
-    free(payload);
+    if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
+        free(payload);
+
+        ((packetinfo->state).seq) += (iph->tot_len - iph->ihl*4 - tcph->doff*4);
+    }
 
     return ret;
 }
