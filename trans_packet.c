@@ -10,6 +10,8 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <byteswap.h>
+
 #include "trans_packet.h"
 
 /* 
@@ -106,15 +108,24 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
+    struct packet_info tmp_packetinfo;
+
+    if (packetinfo->is_server == 1 && tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
         // Server reply SYN + ACK
-        (packetinfo->state).seq = 0;
+        (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
-        struct packet_info tmp_packetinfo;
         memcpy(&tmp_packetinfo, packetinfo, sizeof(struct packet_info));
         strcpy(tmp_packetinfo.dest_ip, inet_ntoa(from_addr));
         tmp_packetinfo.dest_port = ntohs(tcph->source);
         send_packet(&tmp_packetinfo, "", 0, UINT_MAX);
+        return;
+    }
+
+    if (packetinfo->is_server == 0 && tcph->syn == 1 && tcph->ack == 1 && tcph->psh == 0) {
+        //Client reply first ACK
+        (packetinfo->state).seq = 1;
+        (packetinfo->state).ack = 1;
+        send_packet(packetinfo, "", 0, UINT_MAX);
         return;
     }
 
@@ -218,8 +229,8 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     //TCP Header
     tcph->source = htons(packetinfo->source_port);
     tcph->dest = sin.sin_port;
-    tcph->seq = ((packetinfo->state).seq);
-    tcph->ack_seq = ((packetinfo->state).ack);
+    tcph->seq = __bswap_32((packetinfo->state).seq);
+    tcph->ack_seq = __bswap_32((packetinfo->state).ack);
     tcph->doff = 5;  //tcp header size
     tcph->fin=0;
     tcph->syn=0;
@@ -232,7 +243,6 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     tcph->urg_ptr = 0;
 
     if ((packetinfo->state).init == 1) {
-        (packetinfo->state).seq = 1;
         tcph->seq = 0;
         tcph->ack = 0;
         tcph->syn = 1;
@@ -240,12 +250,19 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->psh=0;
     }
 
-    if (identifier == UINT_MAX) {
-        printf("Echo SYN, ACK back to client %s:%d\n", packetinfo->dest_ip, packetinfo->dest_port);
-        (packetinfo->state).seq = 1;
+    if (identifier == UINT_MAX && packetinfo->is_server == 1) {
         tcph->seq = 0;
-        tcph->ack_seq = 1;
+        tcph->ack_seq = __bswap_32(1);
         tcph->syn = 1;
+        tcph->ack = 1;
+        tcph->psh=0;
+    }
+
+    if (identifier == UINT_MAX && packetinfo->is_server == 0) {
+        (packetinfo->state).seq = 1;
+        tcph->seq = __bswap_32(1);
+        tcph->ack_seq = __bswap_32(1);
+        tcph->syn = 0;
         tcph->ack = 1;
         tcph->psh=0;
     }
@@ -276,7 +293,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
         free(payload);
 
-        ((packetinfo->state).seq) += (iph->tot_len - iph->ihl*4 - tcph->doff*4);
+        ((packetinfo->state).seq) += payloadlen;
     }
 
     if ((packetinfo->state).init == 1) {

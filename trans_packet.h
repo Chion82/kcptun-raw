@@ -1,8 +1,8 @@
 #define MTU 1440
 
 struct trans_packet_state {
-  unsigned int seq;
-  unsigned int ack;
+  int seq;
+  int ack;
   int init;
 };
 
