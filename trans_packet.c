@@ -106,18 +106,19 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    if(size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
+    if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
         // Server reply SYN + ACK
-        if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
-            (packetinfo->state).seq = 0;
-            (packetinfo->state).ack = 1;
-            struct packet_info tmp_packetinfo;
-            memcpy(&tmp_packetinfo, packetinfo, sizeof(struct packet_info));
-            strcpy(tmp_packetinfo.dest_ip, inet_ntoa(from_addr));
-            tmp_packetinfo.dest_port = ntohs(tcph->source);
-            send_packet(&tmp_packetinfo, "", 0, UINT_MAX);
-        }
+        (packetinfo->state).seq = 0;
+        (packetinfo->state).ack = 1;
+        struct packet_info tmp_packetinfo;
+        memcpy(&tmp_packetinfo, packetinfo, sizeof(struct packet_info));
+        strcpy(tmp_packetinfo.dest_ip, inet_ntoa(from_addr));
+        tmp_packetinfo.dest_port = ntohs(tcph->source);
+        send_packet(&tmp_packetinfo, "", 0, UINT_MAX);
+        return;
+    }
 
+    if(size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
         return;
     }
 
