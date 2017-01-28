@@ -75,7 +75,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     saddr_size = sizeof(saddr);
 
     size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
-    if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr)) {
+    if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
         return;
     }
 
@@ -128,17 +128,26 @@ void check_packet_recv(struct packet_info* packetinfo) {
 
     from_addr.s_addr = iph->saddr;
 
-    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4, payloadlen, tcph->seq);
+    unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
+
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4 + 4, payloadlen - 4, identifier);
 
 }
 
-int send_packet(struct packet_info* packetinfo, char* payload, int payloadlen, unsigned int seq) {
+int send_packet(struct packet_info* packetinfo, char* source_payload, int source_payloadlen, unsigned int identifier) {
     //Datagram to represent the packet
     char datagram[MTU], *data , *pseudogram;
 
-    if (payloadlen > MTU - 40) {
+    if (source_payloadlen > MTU - 40 -4) {
+        printf("[trans_packet]Packet length should not be greater than MTU.\n");
         return -1;
     }
+
+    char* payload = malloc(source_payloadlen + 4);
+    memcpy(payload, &identifier, 4);
+    memcpy(payload + 4, source_payload, source_payloadlen);
+
+    int payloadlen = source_payloadlen + 4;
 
     //zero out the packet buffer
     memset (datagram, 0, MTU);
@@ -176,7 +185,7 @@ int send_packet(struct packet_info* packetinfo, char* payload, int payloadlen, u
     //TCP Header
     tcph->source = htons(packetinfo->source_port);
     tcph->dest = sin.sin_port;
-    tcph->seq = seq;
+    tcph->seq = 0;
     tcph->ack_seq = 0;
     tcph->doff = 5;  //tcp header size
     tcph->fin=0;
@@ -216,6 +225,7 @@ int send_packet(struct packet_info* packetinfo, char* payload, int payloadlen, u
     int ret = sendto (packet_send_sd, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin));
 
     // printf("[trans_packet]Sent %d bytes packet.\n", ret);
+    free(payload);
 
     return ret;
 }

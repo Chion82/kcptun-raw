@@ -61,7 +61,7 @@ int init_connect_to_socket() {
   return sd;
 }
 
-void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, unsigned int seq) {
+void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, unsigned int identifier) {
 
   if (!is_valid_packet(payload)) {
     return;
@@ -74,11 +74,11 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
     return;
   }
 
-  if (!(seq >= 0 && seq < MAX_CONNECTIONS)) {
+  if (!(identifier >= 0 && identifier < MAX_CONNECTIONS)) {
     return;
   }
 
-  struct connection_info* connection = &(connection_queue[seq]);
+  struct connection_info* connection = &(connection_queue[identifier]);
 
   if (is_packet_command(payload, CONNECTION_CONNECT)) {
 
@@ -124,7 +124,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   }
 
   if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    printf("Remote notifies closing. conv=%d\n", seq);
+    printf("Remote notifies closing. conv=%d\n", identifier);
     close_connection(connection);
   }
 
