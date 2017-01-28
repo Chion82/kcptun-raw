@@ -103,7 +103,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
 
     int payloadlen = size - tcph->doff*4 - iphdrlen;
 
-    short unsigned int *pseudogram = malloc(sizeof(struct pseudo_header) + sizeof(struct tcphdr) + payloadlen);
+    char *pseudogram = malloc(sizeof(struct pseudo_header) + sizeof(struct tcphdr) + payloadlen);
 
 
     psh.source_address = iph->saddr;
@@ -115,7 +115,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
     memcpy(pseudogram + sizeof(struct pseudo_header), pseudo_tcp_buffer, size - iphdrlen);
 
-    unsigned short tcp_checksum = csum(pseudogram, sizeof(struct pseudo_header) + size - iphdrlen);
+    unsigned short tcp_checksum = csum((short unsigned int*)pseudogram, sizeof(struct pseudo_header) + sizeof(struct tcphdr) + payloadlen);
 
     free(pseudogram);
 
