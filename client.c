@@ -123,6 +123,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   ev_io_init(local_read_io, read_cb, local_fd, EV_READ);
   ev_io_init(local_write_io, write_cb, local_fd, EV_WRITE);
   ev_io_start(loop, local_read_io);
+  ev_io_start(loop, local_write_io);
 
   notify_remote_connect(connection);
 
