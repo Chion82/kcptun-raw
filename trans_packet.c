@@ -108,16 +108,13 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    struct packet_info tmp_packetinfo;
-
     if (packetinfo->is_server == 1 && tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
         // Server reply SYN + ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
-        memcpy(&tmp_packetinfo, packetinfo, sizeof(struct packet_info));
-        strcpy(tmp_packetinfo.dest_ip, inet_ntoa(from_addr));
-        tmp_packetinfo.dest_port = ntohs(tcph->source);
-        send_packet(&tmp_packetinfo, "", 0, UINT_MAX);
+        strcpy(packetinfo->dest_ip, inet_ntoa(from_addr));
+        packetinfo->dest_port = ntohs(tcph->source);
+        send_packet(packetinfo, "", 0, UINT_MAX);
         return;
     }
 
@@ -238,7 +235,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     tcph->psh=1;
     tcph->ack=1;
     tcph->urg=0;
-    tcph->window = htons (5840); /* maximum allowed window size */
+    tcph->window = htons(129600);
     tcph->check = 0; //leave checksum 0 now, filled later by pseudo header
     tcph->urg_ptr = 0;
 

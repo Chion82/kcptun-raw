@@ -252,6 +252,10 @@ int is_packet_command(char* packet_buffer, const char* command){
 }
 
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  if (!strcmp(packetinfo.dest_ip, "0.0.0.0")) {
+    return;
+  }
+
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
 
   ev_timer_again(loop, timer);
