@@ -1,4 +1,4 @@
-#define BUFFER_SIZE 1300
+#define BUFFER_SIZE 1370
 #define MAX_CONNECTIONS 4096
 
 #define MIN(a,b) (((a)<(b))?(a):(b))

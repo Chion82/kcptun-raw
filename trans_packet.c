@@ -299,7 +299,11 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         (packetinfo->state).init = 0;
     }
 
-    return ret;
+    if (ret > 0) {
+        return source_payloadlen;
+    } else {
+        return -1;
+    }
 }
  
 /*
