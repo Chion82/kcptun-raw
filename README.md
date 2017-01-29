@@ -11,6 +11,12 @@ Usage
 ```
 $ make
 ```
+
+```
+# ./server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [mode] [noseq]
+# ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode] [noseq]
+```
+
 假设服务器IP为108.8.8.1，80端口上有web服务，伪TCP头的端口为888；  
 本地机器IP为192.168.1.100（通常是路由器分配的IP，不能使用127.0.0.1），TCP监听端口为9999。
 
@@ -26,3 +32,5 @@ $ make
 # ./client 108.8.8.1 888 192.168.1.100 9999 fast2
 $ curl localhost:9999
 ```
+
+如果客户端log中有大量`Re-init fake TCP connection`，请尝试在客户端和服务端的命令最后都添加`noseq`参数。
