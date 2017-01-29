@@ -1,4 +1,4 @@
-#define MTU 1440
+#define MTU 14400
 
 struct trans_packet_state {
   unsigned int seq;

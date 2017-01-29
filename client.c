@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
 
-  if (argc < 6) {
-    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LOCAL_PORT LISTEN_PORT [mode]");
+  if (argc < 5) {
+    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode]");
     exit(1);
   }
 
@@ -182,11 +182,11 @@ int main(int argc, char* argv[]) {
   strcpy(packetinfo.dest_ip, argv[1]);
   packetinfo.dest_port = atoi(argv[2]);
   strcpy(packetinfo.source_ip, argv[3]);
-  packetinfo.source_port = atoi(argv[4]);
+  packetinfo.source_port = 34567;
   packetinfo.on_packet_recv = on_packet_recv;
   packetinfo.is_server = 0;
 
-  tcp_listen_port = atoi(argv[5]);
+  tcp_listen_port = atoi(argv[4]);
 
   loop = ev_default_loop(0);
 
