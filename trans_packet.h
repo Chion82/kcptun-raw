@@ -19,6 +19,12 @@ struct packet_info {
 int packet_send_sd;
 int packet_recv_sd;
 
+int udp_sd;
+
+char* udp_pending_send_buf[65535];
+struct ev_io udp_read_io, udp_write_io;
+struct sockaddr_in udp_sin;
+
 void init_packet(struct packet_info* packetinfo);
 int send_packet(struct packet_info* packetinfo, char* source_payload, int payloadlen, unsigned int identifier);
 

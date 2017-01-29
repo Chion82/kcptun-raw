@@ -49,7 +49,12 @@ int packet_output(const char* buf, int len, ikcpcb *kcp, void *user) {
 
   free(send_buf);
 
-  return ret;
+  if (ret > 0) {
+    return len;
+  } else {
+    return -1;
+  }
+
 }
 
 void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {

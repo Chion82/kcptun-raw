@@ -172,8 +172,8 @@ int main(int argc, char* argv[]) {
   ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.003, 0.003);
   ev_timer_start(loop, &kcp_update_timer);
 
-  ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
-  ev_io_start(loop, &packet_recv_io);
+  // ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
+  // ev_io_start(loop, &packet_recv_io);
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 10);
   ev_timer_start(loop, &heart_beat_timer);

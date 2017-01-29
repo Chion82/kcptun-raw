@@ -11,8 +11,11 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <byteswap.h>
+#include <ev.h>
+#include "ikcp.h"
 
 #include "trans_packet.h"
+#include "common.h"
 
 /* 
     96 bit (12 bytes) pseudo header needed for tcp header checksum calculation 
@@ -27,49 +30,91 @@ struct pseudo_header {
 
 unsigned short csum(unsigned short *ptr,int nbytes);
 
+void udp_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
+    if(EV_ERROR & revents) {
+        return;
+    }
+    check_packet_recv(&packetinfo);
+}
+
+void udp_write_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
+    if(EV_ERROR & revents) {
+        return;
+    }
+    int have_data_to_send = 0;
+    for (int i=0; i<65535; i++) {
+        if (udp_pending_send_buf[i] != NULL) {
+            have_data_to_send = 1;
+            if (sendto(watcher->fd, udp_pending_send_buf[i], sizeof(udp_pending_send_buf[i]), 0, (struct sockaddr*)&udp_sin, sizeof(udp_sin)) == sizeof(udp_pending_send_buf[i])) {
+                printf("[trans_packet]udp pending buf sent out.\n");
+                free(udp_pending_send_buf[i]);
+                udp_pending_send_buf[i] == NULL;
+            }
+        }
+    }
+    if (!have_data_to_send) {
+        ev_io_stop(loop, watcher);
+    }
+}
+
 void init_packet(struct packet_info* packetinfo) {
-    packet_send_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
-    packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_IP));
-    // packet_recv_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
-    if(packet_send_sd == -1 || packet_recv_sd == -1) {
-        //socket creation failed, may be because of non-root privileges
-        perror("Failed to create socket");
-        exit(1);
-    }
+    // packet_send_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
+    // packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_IP));
+    // // packet_recv_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
+    // if(packet_send_sd == -1 || packet_recv_sd == -1) {
+    //     //socket creation failed, may be because of non-root privileges
+    //     perror("Failed to create socket");
+    //     exit(1);
+    // }
 
-    //IP_HDRINCL to tell the kernel that headers are included in the packet
-    int one = 1;
-    const int *val = &one;
-    if (setsockopt (packet_send_sd, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0) {
-        perror("Error setting IP_HDRINCL");
-        exit(2);
-    }
+    // //IP_HDRINCL to tell the kernel that headers are included in the packet
+    // int one = 1;
+    // const int *val = &one;
+    // if (setsockopt (packet_send_sd, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) < 0) {
+    //     perror("Error setting IP_HDRINCL");
+    //     exit(2);
+    // }
 
-    (packetinfo->state).seq = 0;
-    (packetinfo->state).ack = 1;
+    // (packetinfo->state).seq = 0;
+    // (packetinfo->state).ack = 1;
+
+    // if (packetinfo->is_server) {
+    //     (packetinfo->state).init = 0;
+    // } else {
+    //     (packetinfo->state).init = 1;
+    // }
+
+    udp_sd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    setnonblocking(udp_sd);
 
     if (packetinfo->is_server) {
-        (packetinfo->state).init = 0;
-    } else {
-        (packetinfo->state).init = 1;
+        struct sockaddr_in sin;
+        bzero(&sin, sizeof(sin)); 
+        sin.sin_family=AF_INET;  
+        sin.sin_addr.s_addr=htonl(INADDR_ANY);  
+        sin.sin_port=htons(packetinfo->source_port);  
+        bind(udp_sd, (struct sockaddr*)&sin, sizeof(sin));
     }
+
+
+    for (int i=0; i<65535; i++) {
+        udp_pending_send_buf[i] = NULL;
+    }
+
+    ev_io_init(&udp_read_io, udp_read_cb, udp_sd, EV_READ);
+    ev_io_init(&udp_write_io, udp_write_cb, udp_sd, EV_WRITE);
+    ev_io_start(loop, &udp_read_io);
+    ev_io_start(loop, &udp_write_io);
 
 }
 
 void set_packet_recv_nonblocking() {
-    int flags;
-    if (-1 == (flags = fcntl(packet_recv_sd, F_GETFL, 0))) {
-        flags = 0;
-    }
-    fcntl(packet_recv_sd, F_SETFL, flags | O_NONBLOCK);
+    setnonblocking(packet_recv_sd);
 }
 
 void set_packet_send_nonblocking() {
-    int flags;
-    if (-1 == (flags = fcntl(packet_send_sd, F_GETFL, 0))) {
-        flags = 0;
-    }
-    fcntl(packet_send_sd, F_SETFL, flags | O_NONBLOCK);
+    setnonblocking(packet_send_sd);
 }
 
 char* pending_stream_buffer = NULL;
@@ -86,6 +131,18 @@ void check_packet_recv(struct packet_info* packetinfo) {
     char buffer[MTU];
 
     saddr_size = sizeof(saddr);
+
+    //<UDP>
+    size = recvfrom(udp_sd, buffer, MTU, 0, &saddr, &saddr_size);
+
+    if (size <= 0){
+        return;
+    }
+    udp_sin = *((struct sockaddr_in*)&saddr);
+    from_addr = ((struct sockaddr_in*)&saddr)->sin_addr;
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(((struct sockaddr_in*)&saddr)->sin_port), buffer + 4, size - 4, *((unsigned int*)buffer));
+    return;
+    //</UDP>
 
     size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
     
@@ -182,6 +239,38 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
 
     char* payload = "";
     int payloadlen = 0;
+
+    //<UDP>
+    payload = malloc(source_payloadlen + 4);
+    memcpy(payload, &identifier, 4);
+    memcpy(payload + 4, source_payload, source_payloadlen);
+    payloadlen = source_payloadlen + 4;
+    bzero(&udp_sin, sizeof(udp_sin));
+    udp_sin.sin_family = AF_INET;
+    udp_sin.sin_addr.s_addr=inet_addr(packetinfo->dest_ip);
+    udp_sin.sin_port = htons(packetinfo->dest_port);
+
+    int send_ret = sendto(udp_sd, payload, payloadlen, 0, (struct sockaddr*)&udp_sin, sizeof(udp_sin));
+    if (send_ret != payloadlen) {
+        printf("[trans_packet]UDP pending send.\n");
+        int i=0;
+        for (i=0; i<65535; i++) {
+            if (udp_pending_send_buf[i] == NULL) {
+                udp_pending_send_buf[i] = malloc(payloadlen);
+                memcpy(udp_pending_send_buf[i], payload, payloadlen);
+                ev_io_start(loop, &udp_write_io);
+                break;
+            }
+        }
+        if (i == 65535) {
+            printf("[trans_packet]UDP pending buf full.\n");
+            return -1;
+        }
+    }
+
+    free(payload);
+    return payloadlen - 4;
+    //</UDP>
 
     if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
         payload = malloc(source_payloadlen + 4);

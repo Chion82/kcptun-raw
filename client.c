@@ -188,10 +188,10 @@ int main(int argc, char* argv[]) {
 
   tcp_listen_port = atoi(argv[5]);
 
+  loop = ev_default_loop(0);
+
   init_packet(&packetinfo);
   set_packet_recv_nonblocking();
-
-  loop = ev_default_loop(0);
 
   struct ev_io w_accept;
 
@@ -203,8 +203,8 @@ int main(int argc, char* argv[]) {
   ev_io_init(&w_accept, accept_cb, server_fd, EV_READ);
   ev_io_start(loop, &w_accept);
 
-  ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
-  ev_io_start(loop, &packet_recv_io);
+  // ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
+  // ev_io_start(loop, &packet_recv_io);
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 10);
   ev_timer_start(loop, &heart_beat_timer);
