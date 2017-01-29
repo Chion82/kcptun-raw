@@ -109,7 +109,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
     if (packetinfo->is_server == 1 && tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
-        // Server reply SYN + ACK
+        // Server replies SYN + ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
         strcpy(packetinfo->dest_ip, inet_ntoa(from_addr));
@@ -119,7 +119,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
     if (packetinfo->is_server == 0 && tcph->syn == 1 && tcph->ack == 1 && tcph->psh == 0) {
-        //Client reply first ACK
+        //Client replies first ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
         send_packet(packetinfo, "", 0, UINT_MAX);
@@ -164,6 +164,9 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
     (packetinfo->state).ack += payloadlen;
+    if ((packetinfo->state).ack == UINT_MAX) {
+        (packetinfo->state).ack = 1;
+    }
 
     unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
 
@@ -245,6 +248,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->syn = 1;
         tcph->ack_seq = 0;
         tcph->psh=0;
+        printf("[trans_packet]Sending first SYN.\n");
     }
 
     if (identifier == UINT_MAX && packetinfo->is_server == 1) {
@@ -253,15 +257,16 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->syn = 1;
         tcph->ack = 1;
         tcph->psh=0;
+        printf("[trans_packet]Replying first SYN+ACK\n");
     }
 
     if (identifier == UINT_MAX && packetinfo->is_server == 0) {
-        (packetinfo->state).seq = 1;
         tcph->seq = __bswap_32(1);
         tcph->ack_seq = __bswap_32(1);
         tcph->syn = 0;
         tcph->ack = 1;
         tcph->psh=0;
+        printf("[trans_packet]Replying first ACK.\n");
     }
 
     //Now the TCP checksum
@@ -291,6 +296,9 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         free(payload);
 
         ((packetinfo->state).seq) += payloadlen;
+        if ((packetinfo->state).seq == UINT_MAX) {
+            (packetinfo->state).seq = 1;
+        }
     }
 
     if ((packetinfo->state).init == 1) {
