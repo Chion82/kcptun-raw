@@ -95,6 +95,11 @@ void init_packet(struct packet_info* packetinfo) {
         sin.sin_addr.s_addr=htonl(INADDR_ANY);  
         sin.sin_port=htons(packetinfo->source_port);  
         bind(udp_sd, (struct sockaddr*)&sin, sizeof(sin));
+    } else {
+        bzero(&udp_sin, sizeof(udp_sin));
+        udp_sin.sin_family = AF_INET;
+        udp_sin.sin_addr.s_addr=inet_addr(packetinfo->dest_ip);
+        udp_sin.sin_port = htons(packetinfo->dest_port);
     }
 
 
@@ -245,10 +250,6 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     memcpy(payload, &identifier, 4);
     memcpy(payload + 4, source_payload, source_payloadlen);
     payloadlen = source_payloadlen + 4;
-    bzero(&udp_sin, sizeof(udp_sin));
-    udp_sin.sin_family = AF_INET;
-    udp_sin.sin_addr.s_addr=inet_addr(packetinfo->dest_ip);
-    udp_sin.sin_port = htons(packetinfo->dest_port);
 
     int send_ret = sendto(udp_sd, payload, payloadlen, 0, (struct sockaddr*)&udp_sin, sizeof(udp_sin));
     if (send_ret != payloadlen) {
