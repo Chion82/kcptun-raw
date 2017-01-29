@@ -140,7 +140,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
     udp_sin = *((struct sockaddr_in*)&saddr);
     from_addr = ((struct sockaddr_in*)&saddr)->sin_addr;
-    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ((struct sockaddr_in*)&saddr)->sin_port, buffer + 4, size - 4, *((unsigned int*)buffer));
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(((struct sockaddr_in*)&saddr)->sin_port), buffer + 4, size - 4, *((unsigned int*)buffer));
     return;
     //</UDP>
 
