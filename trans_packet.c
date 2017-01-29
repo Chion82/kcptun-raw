@@ -175,7 +175,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     //Datagram to represent the packet
     char datagram[MTU], *data , *pseudogram;
 
-    if (source_payloadlen > MTU - 40 -4) {
+    if (source_payloadlen > MTU - 40 - 4) {
         printf("[trans_packet]Packet length should not be greater than MTU.\n");
         return -1;
     }
