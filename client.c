@@ -99,7 +99,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   }
 
   if (connection == NULL) {
-    printf("Connection queue full\n");
+    LOG("Connection queue full.");
     close(local_fd);
     return;
   }
@@ -113,7 +113,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
     ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
   }
 
-  printf("New connection conv %d.\n", connection->conv);
+  LOG("New connection conv %d.", connection->conv);
 
 
   struct ev_io *local_read_io = &((connection->read_io).io);
@@ -153,7 +153,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   }
 
   if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    printf("Remote notifies closing. conv=%d\n", identifier);
+    LOG("Remote notifies closing. conv=%d", identifier);
     close_connection(connection);
   }
 
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
   srand(time(NULL));
 
   if (argc < 5) {
-    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode]");
+    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode] [noseq]\n");
     exit(1);
   }
 
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
 
   for (int i=0; i<argc; i++) {
     if (!strcmp(argv[i], "noseq")) {
-      printf("Disable TCP sequense counter.\n");
+      LOG("Disable TCP sequense counter.");
       packetinfo.disable_seq_update = 1;
     }
   }

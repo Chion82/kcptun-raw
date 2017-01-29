@@ -14,7 +14,6 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/time.h>
 
 #include "ikcp.h"
 #include "trans_packet.h"
@@ -83,7 +82,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   if (is_packet_command(payload, CONNECTION_CONNECT)) {
 
     if (connection->in_use == 1) {
-      printf("conv=%d already in use. Closing.\n", connection->conv);
+      LOG("conv=%d already in use. Closing.", connection->conv);
       close_connection(connection);
     }
 
@@ -103,7 +102,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
       ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
     }
 
-    printf("New connection conv %d.\n", connection->conv);
+    LOG("New connection conv %d.", connection->conv);
 
     connection->local_fd = local_fd;
 
@@ -125,7 +124,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   }
 
   if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    printf("Remote notifies closing. conv=%d\n", identifier);
+    LOG("Remote notifies closing. conv=%d", identifier);
     close_connection(connection);
   }
 
@@ -136,7 +135,7 @@ int main(int argc, char* argv[]) {
   signal(SIGPIPE, SIG_IGN);
 
   if (argc < 5) {
-    printf("Usage: ./server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [mode]");
+    printf("Usage: ./server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [mode] [noseq]\n");
     exit(1);
   }
 
@@ -164,7 +163,7 @@ int main(int argc, char* argv[]) {
 
   for (int i=0; i<argc; i++) {
     if (!strcmp(argv[i], "noseq")) {
-      printf("Disable TCP sequense counter.\n");
+      LOG("Disable TCP sequense counter.");
       packetinfo.disable_seq_update = 1;
     }
   }

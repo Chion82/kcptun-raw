@@ -66,3 +66,4 @@ void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 int is_packet_command(char* packet_buffer, const char* command);
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
 int iqueue_get_len(struct IQUEUEHEAD* queue);
+void LOG(const char* message, ...);

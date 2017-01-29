@@ -13,7 +13,10 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/time.h>
+
+#include <stdarg.h>
 
 #include "ikcp.h"
 #include "trans_packet.h"
@@ -70,7 +73,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   int recv_len = recv(watcher->fd, buffer, BUFFER_SIZE, 0);
 
   if((recv_len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) || recv_len == 0) {
-    printf("conv %d recv ends.\n", connection->conv);
+    LOG("recv ends. conv=%d\n", connection->conv);
     close_connection(connection);
     notify_remote_close(connection);
     return;
@@ -83,7 +86,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   // printf("Received %d bytes from local. conv=%d\n", recv_len, connection->conv);
 
   if (ikcp_send(connection->kcp, buffer, recv_len) < 0) {
-    printf("kcp send error.\n");
+    LOG("kcp send error.\n");
     close_connection(connection);
     notify_remote_close(connection);
     return;
@@ -110,7 +113,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   int sent_byte = send(watcher->fd, connection->pending_send_buf, connection->pending_send_buf_len, 0);
 
   if (sent_byte == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-    printf("send error.\n");
+    LOG("send error.");
     close_connection(connection);
     notify_remote_close(connection);
     return;
@@ -203,7 +206,7 @@ void kcp_update_interval() {
 }
 
 void notify_remote_close(struct connection_info* connection) {
-  printf("Notifying remote to close.\n");
+  LOG("Notifying remote to close.");
   send_packet(&packetinfo, CONNECTION_CLOSE, 8, connection->conv);
 }
 
@@ -213,7 +216,7 @@ void close_connection(struct connection_info* connection) {
     return;
   }
 
-  printf("Closing connection.conv=%d.\n", connection->conv);
+  LOG("Closing connection.conv=%d.", connection->conv);
 
   ev_io_stop(loop, &((connection->read_io).io));
   ev_io_stop(loop, &((connection->write_io).io));
@@ -261,7 +264,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     (packetinfo.state).ack = 1;
     (packetinfo.state).init = 1;
     packetinfo.source_port = 30000 + rand() % 10000;
-    printf("Re-init fake TCP connection.\n");
+    LOG("Re-init fake TCP connection.");
   }
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
@@ -291,25 +294,25 @@ void init_kcp_mode(int argc, char* argv[]) {
     char* arg = argv[i];
 
     if (!strcmp(arg, "normal")) {
-      printf("normal mode enabled.\n");
+      LOG("normal mode enabled.");
       kcpconfig.nodelay = 0;
       kcpconfig.interval = 30;
       kcpconfig.resend = 2;
       kcpconfig.nc = 1;
     } else if (!strcmp(arg, "fast")) {
-      printf("fast mode enabled.\n");
+      LOG("fast mode enabled.");
       kcpconfig.nodelay = 0;
       kcpconfig.interval = 20;
       kcpconfig.resend = 2;
       kcpconfig.nc = 1;
     } else if (!strcmp(arg, "fast2")) {
-      printf("fast2 mode enabled.\n");
+      LOG("fast2 mode enabled.");
       kcpconfig.nodelay = 1;
       kcpconfig.interval = 20;
       kcpconfig.resend = 2;
       kcpconfig.nc = 1;
     } else if (!strcmp(arg, "fast3")) {
-      printf("fast3 mode enabled.\n");
+      LOG("fast3 mode enabled.");
       kcpconfig.nodelay = 1;
       kcpconfig.interval = 10;
       kcpconfig.resend = 2;
@@ -317,4 +320,16 @@ void init_kcp_mode(int argc, char* argv[]) {
     }
   }
 
+}
+
+void LOG(const char* message, ...) {
+  time_t now = time(NULL);
+  char timestr[20];
+  strftime(timestr, 20, "%Y-%m-%d %H:%M:%S", localtime(&now));
+  printf("[%s] ", timestr);
+  va_list argptr;
+  va_start(argptr, message);
+  vfprintf(stdout, message, argptr);
+  va_end(argptr);
+  printf("\n");
 }

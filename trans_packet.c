@@ -11,8 +11,12 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <byteswap.h>
+#include <ev.h>
 
 #include "trans_packet.h"
+
+#include "ikcp.h"
+#include "common.h"
 
 /* 
     96 bit (12 bytes) pseudo header needed for tcp header checksum calculation 
@@ -178,7 +182,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     char datagram[MTU], *data , *pseudogram;
 
     if (source_payloadlen > MTU - 40 - 4) {
-        printf("[trans_packet]Packet length should not be greater than MTU.\n");
+        LOG("[trans_packet]Packet length should not be greater than MTU.");
         return -1;
     }
 
@@ -247,7 +251,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->syn = 1;
         tcph->ack_seq = 0;
         tcph->psh=0;
-        printf("[trans_packet]Sending first SYN.\n");
+        LOG("[trans_packet]Client sending SYN.");
     }
 
     if (identifier == UINT_MAX && packetinfo->is_server == 1) {
@@ -256,7 +260,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->syn = 1;
         tcph->ack = 1;
         tcph->psh=0;
-        printf("[trans_packet]Replying first SYN+ACK\n");
+        LOG("[trans_packet]Server replying SYN+ACK.");
     }
 
     if (identifier == UINT_MAX && packetinfo->is_server == 0) {
@@ -265,7 +269,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         tcph->syn = 0;
         tcph->ack = 1;
         tcph->psh=0;
-        printf("[trans_packet]Replying first ACK.\n");
+        LOG("[trans_packet]Client replying ACK.");
     }
 
     //Now the TCP checksum
