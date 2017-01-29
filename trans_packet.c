@@ -86,7 +86,7 @@ void init_packet(struct packet_info* packetinfo) {
 
     udp_sd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    // setnonblocking(udp_sd);
+    setnonblocking(udp_sd);
 
     if (packetinfo->is_server) {
         struct sockaddr_in sin;
@@ -128,7 +128,7 @@ int pending_stream_len = 0;
 
 void check_packet_recv(struct packet_info* packetinfo) {
     int saddr_size , size;
-    struct sockaddr saddr;
+    struct sockaddr_in saddr;
     unsigned short iphdrlen;
 
     struct in_addr from_addr;
@@ -138,7 +138,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     saddr_size = sizeof(saddr);
 
     //<UDP>
-    size = recvfrom(udp_sd, buffer, MTU, 0, &saddr, &saddr_size);
+    size = recvfrom(udp_sd, buffer, MTU, 0, (struct sockaddr*)&saddr, &saddr_size);
 
     if (size <= 0){
         return;
@@ -149,7 +149,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     return;
     //</UDP>
 
-    size = recvfrom(packet_recv_sd, buffer, MTU, 0 ,&saddr , &saddr_size);
+    size = recvfrom(packet_recv_sd, buffer, MTU, 0 , (struct sockaddr*)&saddr , &saddr_size);
     
     if(size < 0 || size < sizeof(struct iphdr) + sizeof(struct tcphdr)) {
         return;
