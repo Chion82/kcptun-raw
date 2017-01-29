@@ -34,6 +34,8 @@ struct kcp_config {
   int nc;
 };
 
+unsigned int last_recv_heart_beat;
+
 void notify_remote_close(struct connection_info* connection);
 void close_connection(struct connection_info* connection);
 

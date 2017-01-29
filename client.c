@@ -14,7 +14,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include "ikcp.h"
 #include "trans_packet.h"
@@ -135,6 +135,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   }
 
   if (is_packet_command(payload, HEART_BEAT)) {
+    last_recv_heart_beat = getclock();
     return;
   }
 
@@ -161,9 +162,10 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
 int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
+  srand(time(NULL));
 
-  if (argc < 6) {
-    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LOCAL_PORT LISTEN_PORT [mode]");
+  if (argc < 5) {
+    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode]");
     exit(1);
   }
 
@@ -183,11 +185,11 @@ int main(int argc, char* argv[]) {
   strcpy(packetinfo.dest_ip, argv[1]);
   packetinfo.dest_port = atoi(argv[2]);
   strcpy(packetinfo.source_ip, argv[3]);
-  packetinfo.source_port = atoi(argv[4]);
+  packetinfo.source_port = 30000 + rand() % 10000;
   packetinfo.on_packet_recv = on_packet_recv;
   packetinfo.is_server = 0;
 
-  tcp_listen_port = atoi(argv[5]);
+  tcp_listen_port = atoi(argv[4]);
 
   init_packet(&packetinfo);
   set_packet_recv_nonblocking();
@@ -207,7 +209,7 @@ int main(int argc, char* argv[]) {
   ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
   ev_io_start(loop, &packet_recv_io);
 
-  ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 10);
+  ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 2);
   ev_timer_start(loop, &heart_beat_timer);
 
   ev_run(loop, 0);

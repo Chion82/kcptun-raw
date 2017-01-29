@@ -256,6 +256,14 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     return;
   }
 
+  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > 5) {
+    (packetinfo.state).seq = 0;
+    (packetinfo.state).ack = 1;
+    (packetinfo.state).init = 1;
+    packetinfo.source_port = 30000 + rand() % 10000;
+    printf("Re-init fake TCP connection.\n");
+  }
+
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
 
   ev_timer_again(loop, timer);
