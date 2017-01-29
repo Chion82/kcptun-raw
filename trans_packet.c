@@ -86,7 +86,7 @@ void init_packet(struct packet_info* packetinfo) {
 
     udp_sd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    setnonblocking(udp_sd);
+    // setnonblocking(udp_sd);
 
     if (packetinfo->is_server) {
         struct sockaddr_in sin;
