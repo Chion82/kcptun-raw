@@ -163,10 +163,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    (packetinfo->state).ack += payloadlen;
-    if ((packetinfo->state).ack == UINT_MAX) {
-        (packetinfo->state).ack = 1;
-    }
+    (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
 
     unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
 
@@ -296,9 +293,6 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         free(payload);
 
         ((packetinfo->state).seq) += payloadlen;
-        if ((packetinfo->state).seq == UINT_MAX) {
-            (packetinfo->state).seq = 1;
-        }
     }
 
     if ((packetinfo->state).init == 1) {
