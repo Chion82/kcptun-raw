@@ -73,7 +73,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   int recv_len = recv(watcher->fd, buffer, BUFFER_SIZE, 0);
 
   if((recv_len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) || recv_len == 0) {
-    LOG("recv ends. conv=%d\n", connection->conv);
+    LOG("recv ends. conv=%d", connection->conv);
     close_connection(connection);
     notify_remote_close(connection);
     return;
