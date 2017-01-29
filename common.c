@@ -256,7 +256,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     return;
   }
 
-  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > 5) {
+  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > 5 * 1000) {
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
     (packetinfo.state).init = 1;
