@@ -163,7 +163,9 @@ void check_packet_recv(struct packet_info* packetinfo) {
         return;
     }
 
-    (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
+    if (!(packetinfo->disable_seq_update)) {
+        (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
+    }
 
     unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
 
@@ -291,8 +293,9 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     // printf("[trans_packet]Sent %d bytes packet.\n", ret);
     if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
         free(payload);
-
-        ((packetinfo->state).seq) += payloadlen;
+        if (!(packetinfo->disable_seq_update)) {
+            ((packetinfo->state).seq) += payloadlen;
+        }
     }
 
     if ((packetinfo->state).init == 1) {

@@ -188,6 +188,14 @@ int main(int argc, char* argv[]) {
   packetinfo.source_port = 30000 + rand() % 10000;
   packetinfo.on_packet_recv = on_packet_recv;
   packetinfo.is_server = 0;
+  packetinfo.disable_seq_update = 0;
+
+  for (int i=0; i<argc; i++) {
+    if (!strcmp(argv[i], "noseq")) {
+      printf("Disable TCP sequense counter.\n");
+      packetinfo.disable_seq_update = 1;
+    }
+  }
 
   tcp_listen_port = atoi(argv[4]);
 

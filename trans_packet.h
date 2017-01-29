@@ -14,6 +14,7 @@ struct packet_info {
   void (*on_packet_recv)(char*, uint16_t, char*, int, unsigned int);
   int is_server;
   struct trans_packet_state state;
+  int disable_seq_update;
 };
 
 int packet_send_sd;

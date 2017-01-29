@@ -160,6 +160,14 @@ int main(int argc, char* argv[]) {
   packetinfo.source_port = atoi(argv[4]);
   packetinfo.on_packet_recv = on_packet_recv;
   packetinfo.is_server = 1;
+  packetinfo.disable_seq_update = 0;
+
+  for (int i=0; i<argc; i++) {
+    if (!strcmp(argv[i], "noseq")) {
+      printf("Disable TCP sequense counter.\n");
+      packetinfo.disable_seq_update = 1;
+    }
+  }
 
   strcpy(tcp_connect_to_ip, argv[1]);
   tcp_connect_to_port = atoi(argv[2]);
