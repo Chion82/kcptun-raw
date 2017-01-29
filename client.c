@@ -109,6 +109,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   if (connection->kcp == NULL) {
     connection->kcp = ikcp_create(connection->conv, connection);
     (connection->kcp)->output = packet_output;
+    ikcp_setmtu(connection->kcp, BUFFER_SIZE);
     ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
   }
 
