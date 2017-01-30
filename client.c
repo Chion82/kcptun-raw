@@ -105,6 +105,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   }
 
   connection->local_fd = local_fd;
+  connection->should_close = 0;
 
   if (connection->kcp == NULL) {
     connection->kcp = ikcp_create(connection->conv, connection);

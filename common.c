@@ -74,8 +74,8 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
   if((recv_len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) || recv_len == 0) {
     LOG("recv ends. conv=%d", connection->conv);
-    close_connection(connection);
-    notify_remote_close(connection);
+    close(connection->local_fd);
+    pending_close_connection(connection);
     return;
   }
 
@@ -161,6 +161,12 @@ void kcp_update_interval() {
         continue;
       }
 
+      if (connection_queue[i].should_close && iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) == 0) {
+        close_connection(&(connection_queue[i]));
+        notify_remote_close(&(connection_queue[i]));
+        continue;
+      }
+
       int recv_len = ikcp_recv(connection_queue[i].kcp, recv_buffer, BUFFER_SIZE);
       if (recv_len > 0) {
 
@@ -173,6 +179,7 @@ void kcp_update_interval() {
         }
 
         if (sent_byte == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+          LOG("send error.");
           close_connection(&(connection_queue[i]));
           notify_remote_close(&(connection_queue[i]));
           continue;
@@ -236,8 +243,15 @@ void close_connection(struct connection_info* connection) {
 
   connection->pending_send_buf_len = 0;
 
+  connection->should_close = 0;
+
   connection->in_use = 0;
 }
+
+void pending_close_connection(struct connection_info* connection) {
+  connection->should_close = 1;
+}
+
 
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   if(EV_ERROR & revents) {

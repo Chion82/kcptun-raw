@@ -28,6 +28,7 @@ struct connection_info {
   int pending_send_buf_len;
   struct io_wrap read_io;
   struct io_wrap write_io;
+  int should_close;
 };
 
 struct kcp_config {
@@ -65,6 +66,7 @@ void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
 void kcp_update_interval();
 void notify_remote_close(struct connection_info* connection);
 void close_connection(struct connection_info* connection);
+void pending_close_connection(struct connection_info* connection);
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 int is_packet_command(char* packet_buffer, const char* command);
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);

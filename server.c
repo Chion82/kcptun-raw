@@ -95,6 +95,8 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
       return;
     }
 
+    connection->should_close = 0;
+
     if (connection->kcp == NULL) {
       connection->kcp = ikcp_create(connection->conv, connection);
       (connection->kcp)->output = packet_output;
