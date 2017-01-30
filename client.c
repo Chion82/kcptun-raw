@@ -78,6 +78,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   }
 
   int local_fd = accept(watcher->fd, (struct sockaddr *)&client_addr, &client_len);
+  int client_port = ntohs(client_addr.sin_port);
 
   setnonblocking(watcher->fd);
 
@@ -88,15 +89,14 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   setnonblocking(local_fd);
 
 
-  struct connection_info* connection = NULL;
+  struct connection_info* connection = &(connection_queue[client_port % MAX_CONNECTIONS]);
 
-  for (int i=0; i<MAX_CONNECTIONS; i++) {
-    if (connection_queue[i].in_use == 0) {
-      connection_queue[i].in_use = 1;
-      connection = &(connection_queue[i]);
-      break;
-    }
+  if (connection->in_use) {
+    LOG("conv=%d already in use. Closing.", connection->conv);
+    close_connection(connection);
   }
+
+  connection->in_use = 1;
 
   if (connection == NULL) {
     LOG("Connection queue full.");
