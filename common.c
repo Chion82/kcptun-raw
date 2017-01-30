@@ -161,7 +161,7 @@ void kcp_update_interval() {
         continue;
       }
 
-      if (connection_queue[i].should_close && iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) == 0) {
+      if (connection_queue[i].should_close && iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) == 0 && iqueue_get_len(&((connection_queue[i].kcp)->rcv_queue)) == 0) {
         close_connection(&(connection_queue[i]));
         notify_remote_close(&(connection_queue[i]));
         continue;
