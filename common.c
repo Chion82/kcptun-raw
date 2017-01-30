@@ -151,7 +151,7 @@ void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
 
 
 void kcp_update_interval() {
-  char raw_buffer[BUFFER_SIZE];
+  char raw_buffer[BUFFER_SIZE + 1];
   char* recv_buffer = raw_buffer;
 
   for (int i=0; i<MAX_CONNECTIONS; i++) {
@@ -170,7 +170,7 @@ void kcp_update_interval() {
         continue;
       }
 
-      int recv_len = ikcp_recv(connection_queue[i].kcp, raw_buffer, BUFFER_SIZE);
+      int recv_len = ikcp_recv(connection_queue[i].kcp, raw_buffer, BUFFER_SIZE + 1);
       if (recv_len > 0) {
 
         char kcp_cmd = *((char*)raw_buffer);
