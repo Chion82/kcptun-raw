@@ -196,8 +196,8 @@ void kcp_update_interval() {
         }
 
         if (sent_byte == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-          LOG("send ends. conv=%d", connection->conv);
-          pending_close_connection(connection);
+          LOG("send ends. conv=%d", connection_queue[i].conv);
+          pending_close_connection(&(connection_queue[i]));
           continue;
         }
 
