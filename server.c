@@ -87,6 +87,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
     }
 
     connection->in_use = 1;
+    connection->pending_close = 0;
 
     int local_fd = init_connect_to_socket();
 

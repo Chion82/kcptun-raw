@@ -97,12 +97,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   }
 
   connection->in_use = 1;
-
-  if (connection == NULL) {
-    LOG("Connection queue full.");
-    close(local_fd);
-    return;
-  }
+  connection->pending_close = 0;
 
   connection->local_fd = local_fd;
 

@@ -31,6 +31,7 @@ struct connection_info {
   int pending_send_buf_len;
   struct io_wrap read_io;
   struct io_wrap write_io;
+  int pending_close;
 };
 
 struct kcp_config {

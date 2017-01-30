@@ -74,7 +74,6 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
   if((recv_len == -1 && errno != EAGAIN && errno != EWOULDBLOCK) || recv_len == 0) {
     LOG("recv ends. conv=%d", connection->conv);
-    close(connection->local_fd);
     pending_close_connection(connection);
     return;
   }
@@ -185,6 +184,10 @@ void kcp_update_interval() {
         recv_buffer = raw_buffer + 1;
         recv_len -= 1;
 
+        if (recv_len == 0 || connection_queue[i].pending_close) {
+          continue;
+        }
+
         // printf("Received %d bytes from kcp. conv=%d\n", recv_len,connection_queue[i].conv);
 
         int sent_byte = 0;
@@ -259,12 +262,18 @@ void close_connection(struct connection_info* connection) {
   connection->pending_send_buf_len = 0;
 
   connection->in_use = 0;
+
+  connection->pending_close = 0;
 }
 
 void pending_close_connection(struct connection_info* connection) {
   LOG("Notifying pending close to remote. conv=%d", connection->conv);
+  connection->pending_close = 1;
   char kcp_cmd = KCP_CMD_CLOSE;
   ikcp_send(connection->kcp, &kcp_cmd, 1);
+  ev_io_stop(loop, &((connection->read_io).io));
+  ev_io_stop(loop, &((connection->write_io).io));
+  close(connection->local_fd);
 }
 
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
