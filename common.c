@@ -230,7 +230,7 @@ void kcp_update_interval() {
 }
 
 void notify_remote_close(struct connection_info* connection) {
-  LOG("Notifying remote to immediately close.");
+  LOG("Notifying remote to immediately close. conv=%d", connection->conv);
   send_packet(&packetinfo, CONNECTION_CLOSE, 8, connection->conv);
 }
 
