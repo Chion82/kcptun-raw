@@ -120,9 +120,8 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   int sent_byte = send(watcher->fd, connection->pending_send_buf, connection->pending_send_buf_len, 0);
 
   if (sent_byte == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-    LOG("send error.");
-    close_connection(connection);
-    notify_remote_close(connection);
+    LOG("send ends. conv=%d", connection->conv);
+    pending_close_connection(connection);
     return;
   }
 
@@ -197,9 +196,8 @@ void kcp_update_interval() {
         }
 
         if (sent_byte == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-          LOG("send error.");
-          close_connection(&(connection_queue[i]));
-          notify_remote_close(&(connection_queue[i]));
+          LOG("send ends. conv=%d", connection->conv);
+          pending_close_connection(connection);
           continue;
         }
 
