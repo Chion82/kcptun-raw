@@ -158,12 +158,15 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
 int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
+
   srand(time(NULL));
 
   if (argc < 5) {
-    printf("Usage: ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode] [noseq]\n");
+    printf("Usage: ./client_bin SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode] [noseq]\n");
     exit(1);
   }
+
+  tcp_listen_port = atoi(argv[4]);
 
   init_kcp_mode(argc, argv);
 
@@ -192,8 +195,6 @@ int main(int argc, char* argv[]) {
       packetinfo.disable_seq_update = 1;
     }
   }
-
-  tcp_listen_port = atoi(argv[4]);
 
   init_packet(&packetinfo);
   set_packet_recv_nonblocking();

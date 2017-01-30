@@ -1,3 +1,4 @@
 client
+client_bin
 server
 *.o

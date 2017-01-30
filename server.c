@@ -14,6 +14,7 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include "ikcp.h"
 #include "trans_packet.h"
@@ -135,11 +136,15 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
 int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
+  srand(time(NULL));
 
   if (argc < 5) {
-    printf("Usage: ./server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [mode] [noseq]\n");
+    printf("Usage: ./server_bin TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [mode] [noseq]\n");
     exit(1);
   }
+
+  strcpy(tcp_connect_to_ip, argv[1]);
+  tcp_connect_to_port = atoi(argv[2]);
 
   init_kcp_mode(argc, argv);
 
@@ -169,9 +174,6 @@ int main(int argc, char* argv[]) {
       packetinfo.disable_seq_update = 1;
     }
   }
-
-  strcpy(tcp_connect_to_ip, argv[1]);
-  tcp_connect_to_port = atoi(argv[2]);
 
   loop = ev_default_loop(0);
 
