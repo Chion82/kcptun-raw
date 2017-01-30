@@ -128,7 +128,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
 
   if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
     LOG("Remote notifies closing. conv=%d", identifier);
-    close_connection(connection);
+    pending_close_connection(connection);
   }
 
 }
