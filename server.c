@@ -95,8 +95,6 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
       return;
     }
 
-    connection->should_close = 0;
-
     if (connection->kcp == NULL) {
       connection->kcp = ikcp_create(connection->conv, connection);
       (connection->kcp)->output = packet_output;
@@ -127,7 +125,7 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
   }
 
   if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    LOG("Remote notifies closing. conv=%d", identifier);
+    LOG("Remote notifies immediately closing. conv=%d", identifier);
     pending_close_connection(connection);
   }
 

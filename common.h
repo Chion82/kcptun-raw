@@ -14,6 +14,9 @@
 #define IS_VALID_PACKET(payload) (is_packet_command((payload), CONNECTION_CONNECT) || is_packet_command((payload), CONNECTION_PUSH) || is_packet_command((payload), CONNECTION_CLOSE) || is_packet_command((payload), HEART_BEAT))
 #define is_valid_packet IS_VALID_PACKET
 
+#define KCP_CMD_PUSH 1
+#define KCP_CMD_CLOSE 100
+
 struct io_wrap {
   struct ev_io io;
   struct connection_info* connection;
@@ -28,7 +31,6 @@ struct connection_info {
   int pending_send_buf_len;
   struct io_wrap read_io;
   struct io_wrap write_io;
-  int should_close;
 };
 
 struct kcp_config {

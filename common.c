@@ -85,12 +85,20 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
   // printf("Received %d bytes from local. conv=%d\n", recv_len, connection->conv);
 
-  if (ikcp_send(connection->kcp, buffer, recv_len) < 0) {
+  char* send_buf = malloc(recv_len + 1);
+  char kcp_cmd = KCP_CMD_PUSH;
+  memcpy(send_buf, &kcp_cmd, 1);
+  memcpy(send_buf + 1, buffer, recv_len);
+
+  if (ikcp_send(connection->kcp, send_buf, recv_len + 1) < 0) {
+    free(send_buf);
     LOG("kcp send error.\n");
     close_connection(connection);
     notify_remote_close(connection);
     return;
   }
+
+  free(send_buf);
 
   kcp_update_interval();
 
@@ -143,7 +151,8 @@ void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
 
 
 void kcp_update_interval() {
-  char recv_buffer[BUFFER_SIZE];
+  char raw_buffer[BUFFER_SIZE];
+  char* recv_buffer = raw_buffer;
 
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     if (connection_queue[i].in_use == 1 && connection_queue[i].kcp != NULL) {
@@ -161,14 +170,20 @@ void kcp_update_interval() {
         continue;
       }
 
-      if (connection_queue[i].should_close && iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) == 0 && iqueue_get_len(&((connection_queue[i].kcp)->rcv_queue)) == 0) {
-        close_connection(&(connection_queue[i]));
-        notify_remote_close(&(connection_queue[i]));
-        continue;
-      }
-
       int recv_len = ikcp_recv(connection_queue[i].kcp, recv_buffer, BUFFER_SIZE);
       if (recv_len > 0) {
+
+        char kcp_cmd = *((char*)recv_buffer);
+
+        if (kcp_cmd == KCP_CMD_CLOSE) {
+          LOG("Remote notifies pending close. conv=%d", connection_queue[i].conv);
+          close_connection(&(connection_queue[i]));
+          notify_remote_close(&(connection_queue[i]));
+          continue;
+        }
+
+        recv_buffer += 1;
+        recv_len -= 1;
 
         // printf("Received %d bytes from kcp. conv=%d\n", recv_len,connection_queue[i].conv);
 
@@ -215,7 +230,7 @@ void kcp_update_interval() {
 }
 
 void notify_remote_close(struct connection_info* connection) {
-  LOG("Notifying remote to close.");
+  LOG("Notifying remote to immediately close.");
   send_packet(&packetinfo, CONNECTION_CLOSE, 8, connection->conv);
 }
 
@@ -243,15 +258,14 @@ void close_connection(struct connection_info* connection) {
 
   connection->pending_send_buf_len = 0;
 
-  connection->should_close = 0;
-
   connection->in_use = 0;
 }
 
 void pending_close_connection(struct connection_info* connection) {
-  connection->should_close = 1;
+  LOG("Notifying pending close to remote. conv=%d", connection->conv);
+  char kcp_cmd = KCP_CMD_CLOSE;
+  ikcp_send(connection->kcp, &kcp_cmd, 1);
 }
-
 
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   if(EV_ERROR & revents) {
