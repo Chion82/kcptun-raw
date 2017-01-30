@@ -98,7 +98,8 @@ void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, 
     if (connection->kcp == NULL) {
       connection->kcp = ikcp_create(connection->conv, connection);
       (connection->kcp)->output = packet_output;
-      // ikcp_setmtu(connection->kcp, BUFFER_SIZE);
+      ikcp_setmtu(connection->kcp, KCP_MTU);
+      ikcp_wndsize(connection->kcp, 128, 128);
       ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
     }
 

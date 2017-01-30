@@ -66,7 +66,7 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
     return;
   }
 
-  if (iqueue_get_len(&((connection->kcp)->snd_queue)) > 20) {
+  if (iqueue_get_len(&((connection->kcp)->snd_queue)) > MAX_QUEUE_LENGTH) {
     return;
   }
 
@@ -124,7 +124,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   }
 
   if (sent_byte < connection->pending_send_buf_len) {
-    // printf("[write_cb()]localfd: Pending send.\n");
+    // LOG("[write_cb()]localfd: Pending send.\n");
     memmove(connection->pending_send_buf, connection->pending_send_buf + sent_byte, connection->pending_send_buf_len - sent_byte);
   } else if (sent_byte == connection->pending_send_buf_len) {
     free(connection->pending_send_buf);
@@ -149,13 +149,15 @@ void kcp_update_interval() {
     if (connection_queue[i].in_use == 1 && connection_queue[i].kcp != NULL) {
       ikcp_update(connection_queue[i].kcp, getclock());
 
-      if (iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) > 20) {
+      // Throttle local receive if remote send queue is too long
+      if (iqueue_get_len(&((connection_queue[i].kcp)->snd_queue)) > MAX_QUEUE_LENGTH) {
         ev_io_stop(loop, &((connection_queue[i].read_io).io));
       } else {
         ev_io_start(loop, &((connection_queue[i].read_io).io));
       }
 
-      if (connection_queue[i].pending_send_buf_len > BUFFER_SIZE * 20) {
+      // Trottle remote receive if local send buf has data
+      if (connection_queue[i].pending_send_buf_len > 0) {
         continue;
       }
 
@@ -181,7 +183,7 @@ void kcp_update_interval() {
         }
 
         if (sent_byte < recv_len) {
-          // printf("[kcp_update_interval()]localfd: Pending send.\n");
+          // LOG("[kcp_update_interval()]localfd: Pending send.\n");
           
           if (connection_queue[i].pending_send_buf_len == 0) {
             connection_queue[i].pending_send_buf = malloc(recv_len - sent_byte);
