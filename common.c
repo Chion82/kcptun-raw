@@ -170,10 +170,10 @@ void kcp_update_interval() {
         continue;
       }
 
-      int recv_len = ikcp_recv(connection_queue[i].kcp, recv_buffer, BUFFER_SIZE);
+      int recv_len = ikcp_recv(connection_queue[i].kcp, raw_buffer, BUFFER_SIZE);
       if (recv_len > 0) {
 
-        char kcp_cmd = *((char*)recv_buffer);
+        char kcp_cmd = *((char*)raw_buffer);
 
         if (kcp_cmd == KCP_CMD_CLOSE) {
           LOG("Remote notifies pending close. conv=%d", connection_queue[i].conv);
@@ -182,7 +182,7 @@ void kcp_update_interval() {
           continue;
         }
 
-        recv_buffer += 1;
+        recv_buffer = raw_buffer + 1;
         recv_len -= 1;
 
         // printf("Received %d bytes from kcp. conv=%d\n", recv_len,connection_queue[i].conv);
