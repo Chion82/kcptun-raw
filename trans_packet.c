@@ -52,12 +52,6 @@ void init_packet(struct packet_info* packetinfo) {
     (packetinfo->state).seq = 0;
     (packetinfo->state).ack = 1;
 
-    if (packetinfo->is_server) {
-        (packetinfo->state).init = 0;
-    } else {
-        (packetinfo->state).init = 1;
-    }
-
 }
 
 void set_packet_recv_nonblocking() {
@@ -118,7 +112,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
         (packetinfo->state).ack = 1;
         strcpy(packetinfo->dest_ip, inet_ntoa(from_addr));
         packetinfo->dest_port = ntohs(tcph->source);
-        send_packet(packetinfo, "", 0, UINT_MAX);
+        send_packet(packetinfo, "", 0, REPLY_SYN_ACK);
         return;
     }
 
@@ -126,7 +120,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
         //Client replies first ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
-        send_packet(packetinfo, "", 0, UINT_MAX);
+        send_packet(packetinfo, "", 0, REPLY_ACK);
         return;
     }
 
@@ -171,13 +165,13 @@ void check_packet_recv(struct packet_info* packetinfo) {
         (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
     }
 
-    unsigned int identifier = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
+    unsigned int flag = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
 
-    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4 + 4, payloadlen - 4, identifier);
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4 + 4, payloadlen - 4, flag);
 
 }
 
-int send_packet(struct packet_info* packetinfo, char* source_payload, int source_payloadlen, unsigned int identifier) {
+int send_packet(struct packet_info* packetinfo, char* source_payload, int source_payloadlen, unsigned int flag) {
     //Datagram to represent the packet
     char datagram[MTU], *data , *pseudogram;
 
@@ -189,9 +183,9 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     char* payload = "";
     int payloadlen = 0;
 
-    if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
+    if (flag < UINT_MAX - 2) {
         payload = malloc(source_payloadlen + 4);
-        memcpy(payload, &identifier, 4);
+        memcpy(payload, &flag, 4);
         memcpy(payload + 4, source_payload, source_payloadlen);
         payloadlen = source_payloadlen + 4;
     }
@@ -245,7 +239,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     tcph->check = 0; //leave checksum 0 now, filled later by pseudo header
     tcph->urg_ptr = 0;
 
-    if ((packetinfo->state).init == 1) {
+    if (flag == FIRST_SYN) {
         tcph->seq = 0;
         tcph->ack = 0;
         tcph->syn = 1;
@@ -254,7 +248,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         LOG("[trans_packet]Client sending SYN.");
     }
 
-    if (identifier == UINT_MAX && packetinfo->is_server == 1) {
+    if (flag == REPLY_SYN_ACK) {
         tcph->seq = 0;
         tcph->ack_seq = __bswap_32(1);
         tcph->syn = 1;
@@ -263,7 +257,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         LOG("[trans_packet]Server replying SYN+ACK.");
     }
 
-    if (identifier == UINT_MAX && packetinfo->is_server == 0) {
+    if (flag == REPLY_ACK) {
         tcph->seq = __bswap_32(1);
         tcph->ack_seq = __bswap_32(1);
         tcph->syn = 0;
@@ -295,15 +289,11 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     int ret = sendto (packet_send_sd, datagram, iph->tot_len ,  0, (struct sockaddr *) &sin, sizeof (sin));
 
     // printf("[trans_packet]Sent %d bytes packet.\n", ret);
-    if (identifier != UINT_MAX && (packetinfo->state).init == 0) {
+    if (flag < UINT_MAX - 2) {
         free(payload);
         if (!(packetinfo->disable_seq_update)) {
             ((packetinfo->state).seq) += payloadlen;
         }
-    }
-
-    if ((packetinfo->state).init == 1) {
-        (packetinfo->state).init = 0;
     }
 
     if (ret > 0) {

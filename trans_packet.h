@@ -1,9 +1,12 @@
 #define MTU 1440
 
+#define FIRST_SYN UINT_MAX - 2
+#define REPLY_SYN_ACK UINT_MAX - 1
+#define REPLY_ACK UINT_MAX
+
 struct trans_packet_state {
   unsigned int seq;
   unsigned int ack;
-  int init;
 };
 
 struct packet_info {
@@ -21,7 +24,7 @@ int packet_send_sd;
 int packet_recv_sd;
 
 void init_packet(struct packet_info* packetinfo);
-int send_packet(struct packet_info* packetinfo, char* source_payload, int payloadlen, unsigned int identifier);
+int send_packet(struct packet_info* packetinfo, char* source_payload, int payloadlen, unsigned int flag);
 
 void set_packet_recv_nonblocking();
 void set_packet_send_nonblocking();

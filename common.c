@@ -197,17 +197,16 @@ void kcp_update_interval() {
 
   int recv_len = ikcp_recv(kcp, recv_buf, BUFFER_SIZE);
 
-  if (iqueue_get_len(&(kcp->snd_queue)) > MAX_QUEUE_LENGTH) {
-    for (int i=0; i<MAX_CONNECTIONS; i++) {
-      if (connection_queue[i].in_use) {
-        ev_io_stop(loop, &((connection_queue[i].read_io).io));
-      }
+  int stop_recv = (iqueue_get_len(&(kcp->snd_queue)) > MAX_QUEUE_LENGTH) ? 1 : 0;
+
+  for (int i=0; i<MAX_CONNECTIONS; i++) {
+    if (!(connection_queue[i].in_use)) {
+      continue;
     }
-  } else {
-    for (int i=0; i<MAX_CONNECTIONS; i++) {
-      if (connection_queue[i].in_use) {
-        ev_io_start(loop, &((connection_queue[i].read_io).io));
-      }
+    if (stop_recv) {
+      ev_io_stop(loop, &((connection_queue[i].read_io).io));
+    } else {
+      ev_io_start(loop, &((connection_queue[i].read_io).io));
     }
   }
 
@@ -396,9 +395,10 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
   if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > 5 * 1000) {
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
-    (packetinfo.state).init = 1;
     packetinfo.source_port = 30000 + rand() % 10000;
     LOG("Re-init fake TCP connection.");
+    send_packet(&packetinfo, "", 0, FIRST_SYN);
+    return;
   }
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);

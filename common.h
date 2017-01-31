@@ -1,8 +1,8 @@
 #define KCP_MTU (MTU - 40 - 4 - 20)
 #define BUFFER_SIZE (KCP_MTU - 30)
 #define KCP_MAX_WND_SIZE 1024
-#define MAX_CONNECTIONS 4096
-#define MAX_QUEUE_LENGTH 10000
+#define MAX_CONNECTIONS 1024
+#define MAX_QUEUE_LENGTH 5000
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -49,8 +49,6 @@ ikcpcb *kcp;
 
 unsigned int last_recv_heart_beat;
 
-
-
 struct packet_info packetinfo;
 
 struct connection_info connection_queue[MAX_CONNECTIONS];
@@ -68,7 +66,7 @@ void init_kcp_mode(int argc, char* argv[]);
 unsigned int getclock();
 int setnonblocking(int fd);
 int packet_output(const char* buf, int len, ikcpcb *kcp, void *user);
-void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length, unsigned int identifier);
+void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length, unsigned int flag);
 void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
