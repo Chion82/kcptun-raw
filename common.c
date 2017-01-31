@@ -161,7 +161,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
   }
 
   if (sent_bytes == connection->pending_send_buf_len) {
-    LOG("write_cb(): all pending data sent out.");
+    // LOG("write_cb(): all pending data sent out.");
     connection->pending_send_buf_len = 0;
     free(connection->pending_send_buf);
     connection->pending_send_buf = NULL;
@@ -170,7 +170,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
       return;
     }
   } else {
-    LOG("write_cb(): partially sent.");
+    // LOG("write_cb(): partially sent.");
     memmove(connection->pending_send_buf,
       connection->pending_send_buf + sent_bytes,
       connection->pending_send_buf_len - sent_bytes);
@@ -298,7 +298,7 @@ void handle_recv_stream() {
       }
 
       if (sent_bytes < fragment_payload_length) {
-        LOG("handle_recv_stream(): partially sent.");
+        // LOG("handle_recv_stream(): partially sent.");
         connection->pending_send_buf = realloc(connection->pending_send_buf,
           connection->pending_send_buf_len + fragment_payload_length - sent_bytes);
         memcpy(connection->pending_send_buf + connection->pending_send_buf_len,
