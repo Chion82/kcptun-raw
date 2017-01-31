@@ -61,77 +61,6 @@ int init_connect_to_socket() {
   return sd;
 }
 
-void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, unsigned int identifier) {
-
-  if (!is_valid_packet(payload)) {
-    return;
-  }
-
-  strcpy(packetinfo.dest_ip, from_ip);
-  packetinfo.dest_port = from_port;
-
-  if (is_packet_command(payload, HEART_BEAT)) {
-    return;
-  }
-
-  if (!(identifier >= 0 && identifier < MAX_CONNECTIONS)) {
-    return;
-  }
-
-  struct connection_info* connection = &(connection_queue[identifier]);
-
-  if (is_packet_command(payload, CONNECTION_CONNECT)) {
-
-    if (connection->in_use == 1) {
-      LOG("conv=%d already in use. Closing.", connection->conv);
-      close_connection(connection);
-    }
-
-    connection->in_use = 1;
-    connection->pending_close = 0;
-
-    int local_fd = init_connect_to_socket();
-
-    if (local_fd < 0) {
-      connection->in_use = 0;
-      return;
-    }
-
-    if (connection->kcp == NULL) {
-      connection->kcp = ikcp_create(connection->conv, connection);
-      (connection->kcp)->output = packet_output;
-      ikcp_setmtu(connection->kcp, KCP_MTU);
-      ikcp_wndsize(connection->kcp, KCP_MAX_WND_SIZE, KCP_MAX_WND_SIZE);
-      ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
-    }
-
-    LOG("New connection conv %d.", connection->conv);
-
-    connection->local_fd = local_fd;
-
-    struct ev_io *local_read_io = &((connection->read_io).io);
-    struct ev_io *local_write_io = &((connection->write_io).io);
-
-    memset(local_read_io, 0x00, sizeof(struct ev_io));
-    memset(local_write_io, 0x00, sizeof(struct ev_io));
-
-    ev_io_init(local_read_io, read_cb, local_fd, EV_READ);
-    ev_io_init(local_write_io, write_cb, local_fd, EV_WRITE);
-    ev_io_start(loop, local_read_io);
-    ev_io_start(loop, local_write_io);
-
-  }
-
-  if (is_packet_command(payload, CONNECTION_PUSH) && size > 8 && connection->kcp != NULL && connection->in_use == 1) {
-    ikcp_input(connection->kcp, payload + 8, size - 8);
-  }
-
-  if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    LOG("Remote notifies immediately closing. conv=%d", identifier);
-    close_connection(connection);
-  }
-
-}
 
 int main(int argc, char* argv[]) {
 
@@ -152,7 +81,6 @@ int main(int argc, char* argv[]) {
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     connection_queue[i].in_use = 0;
     connection_queue[i].conv = i;
-    connection_queue[i].kcp = NULL;
     connection_queue[i].local_fd = -1;
     connection_queue[i].pending_send_buf_len = 0;
     connection_queue[i].pending_send_buf = NULL;
@@ -181,7 +109,7 @@ int main(int argc, char* argv[]) {
 
   set_packet_recv_nonblocking();
 
-  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.003, 0.003);
+  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
   ev_timer_start(loop, &kcp_update_timer);
 
   ev_io_init(&packet_recv_io, packet_read_cb, packet_recv_sd, EV_READ);
@@ -189,6 +117,8 @@ int main(int argc, char* argv[]) {
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 2);
   ev_timer_start(loop, &heart_beat_timer);
+
+  init_kcp();
 
   ev_run(loop, 0);
 

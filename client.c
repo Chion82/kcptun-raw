@@ -29,10 +29,6 @@
 
 int tcp_listen_port;
 
-void notify_remote_connect(struct connection_info* connection) {
-  send_packet(&packetinfo, CONNECTION_CONNECT, 8, connection->conv);
-}
-
 int init_server_socket() {
   // Create server socket
   int sd;
@@ -97,17 +93,11 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   }
 
   connection->in_use = 1;
-  connection->pending_close = 0;
 
   connection->local_fd = local_fd;
 
-  if (connection->kcp == NULL) {
-    connection->kcp = ikcp_create(connection->conv, connection);
-    (connection->kcp)->output = packet_output;
-    ikcp_setmtu(connection->kcp, KCP_MTU);
-    ikcp_wndsize(connection->kcp, KCP_MAX_WND_SIZE, KCP_MAX_WND_SIZE);
-    ikcp_nodelay(connection->kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
-  }
+  connection->pending_send_buf = NULL;
+  connection->pending_send_buf_len = 0;
 
   LOG("New connection conv %d.", connection->conv);
 
@@ -121,37 +111,6 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   ev_io_start(loop, local_write_io);
 
   notify_remote_connect(connection);
-
-}
-
-void on_packet_recv(char* from_ip, uint16_t from_port, char* payload, int size, unsigned int identifier) {
-
-  if (!is_valid_packet(payload)) {
-    return;
-  }
-
-  if (is_packet_command(payload, HEART_BEAT)) {
-    last_recv_heart_beat = getclock();
-    return;
-  }
-
-  if (!(identifier >= 0 && identifier < MAX_CONNECTIONS)) {
-    return;
-  }
-
-  struct connection_info* connection = &(connection_queue[identifier]);
-  if (connection->in_use == 0 || connection->kcp == NULL) {
-    return;
-  }
-
-  if (is_packet_command(payload, CONNECTION_PUSH) && size > 8 && connection->kcp != NULL && connection->in_use == 1) {
-    ikcp_input(connection->kcp, payload + 8, size - 8);
-  }
-
-  if (is_packet_command(payload, CONNECTION_CLOSE) && connection->in_use == 1) {
-    LOG("Remote notifies immediately closing. conv=%d", identifier);
-    close_connection(connection);
-  }
 
 }
 
@@ -173,7 +132,6 @@ int main(int argc, char* argv[]) {
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     connection_queue[i].in_use = 0;
     connection_queue[i].conv = i;
-    connection_queue[i].kcp = NULL;
     connection_queue[i].local_fd = -1;
     connection_queue[i].pending_send_buf_len = 0;
     connection_queue[i].pending_send_buf = NULL;
@@ -203,7 +161,7 @@ int main(int argc, char* argv[]) {
 
   struct ev_io w_accept;
 
-  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.003, 0.003);
+  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
   ev_timer_start(loop, &kcp_update_timer);
 
   int server_fd = init_server_socket();
@@ -216,6 +174,8 @@ int main(int argc, char* argv[]) {
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 2);
   ev_timer_start(loop, &heart_beat_timer);
+
+  init_kcp();
 
   ev_run(loop, 0);
 
