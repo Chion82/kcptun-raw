@@ -71,6 +71,13 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
     ikcp_input(kcp, buffer + 8, length - 8);
   }
 
+#ifdef SERVER
+  if (packet_is_command(buffer, INIT_KCP)) {
+    LOG("Re-init KCP connection.");
+    init_kcp();
+  }
+#endif
+
 }
 
 
@@ -431,11 +438,20 @@ void LOG(const char* message, ...) {
 }
 
 void init_kcp() {
+  if (kcp != NULL) {
+    ikcp_release(kcp);
+  }
+
   kcp = ikcp_create(0, NULL);
   kcp->output = packet_output;
   ikcp_setmtu(kcp, KCP_MTU);
   ikcp_wndsize(kcp, KCP_MAX_WND_SIZE, KCP_MAX_WND_SIZE);
   ikcp_nodelay(kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
+
+#ifndef SERVER
+  send_packet(&packetinfo, "", 1, 0);
+  send_packet(&packetinfo, INIT_KCP, 8, 0);
+#endif
 }
 
 int iqueue_get_len(struct IQUEUEHEAD* queue) {

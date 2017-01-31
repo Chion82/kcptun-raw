@@ -12,6 +12,7 @@
 #define CONNECTION_CLOSE 3
 #define HEART_BEAT "HARTBEAT"
 #define PUSH_DATA "PUSHDATA"
+#define INIT_KCP "INITKCP0"
 #define IS_VALID_PACKET(payload) (is_packet_command((payload), CONNECTION_CONNECT) || is_packet_command((payload), CONNECTION_PUSH) || is_packet_command((payload), CONNECTION_CLOSE) || is_packet_command((payload), HEART_BEAT))
 #define is_valid_packet IS_VALID_PACKET
 
