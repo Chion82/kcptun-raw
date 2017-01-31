@@ -2,7 +2,7 @@
 #define BUFFER_SIZE (KCP_MTU - 30)
 #define KCP_MAX_WND_SIZE 1024
 #define MAX_CONNECTIONS 4096
-#define MAX_QUEUE_LENGTH 1024
+#define MAX_QUEUE_LENGTH 10000
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
