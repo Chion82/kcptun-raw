@@ -306,7 +306,7 @@ void handle_recv_stream() {
 }
 
 void notify_remote_connect(struct connection_info* connection) {
-  LOG("Notifying remote connection. conv=%d", connection->conv);
+  LOG("Notifying remote new connection. conv=%d", connection->conv);
   struct fragment_header command_header;
   command_header.conv = connection->conv;
   command_header.command = CONNECTION_CONNECT;

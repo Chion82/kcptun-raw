@@ -1,6 +1,6 @@
-#define BUFFER_SIZE (MTU - 40 - 4 - 50)
 #define KCP_MTU (MTU - 40 - 4 - 20)
-#define KCP_MAX_WND_SIZE 512
+#define BUFFER_SIZE (KCP_MTU - 30)
+#define KCP_MAX_WND_SIZE 1024
 #define MAX_CONNECTIONS 4096
 #define MAX_QUEUE_LENGTH 1024
 
