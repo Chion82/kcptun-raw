@@ -103,8 +103,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  last_recv_heart_beat = getclock();
-
   loop = ev_default_loop(0);
 
   init_packet(&packetinfo);

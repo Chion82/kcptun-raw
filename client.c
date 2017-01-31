@@ -115,6 +115,10 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
 
 }
 
+void re_init_kcp_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  send_packet(&packetinfo, INIT_KCP, 8, 0);
+}
+
 int main(int argc, char* argv[]) {
 
   signal(SIGPIPE, SIG_IGN);
@@ -155,14 +159,16 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  last_recv_heart_beat = getclock();
-
   init_packet(&packetinfo);
   set_packet_recv_nonblocking();
 
   loop = ev_default_loop(0);
 
   struct ev_io w_accept;
+  struct ev_timer init_kcp_timer;
+
+  ev_timer_init(&init_kcp_timer, re_init_kcp_cb, 1, 0);
+  ev_timer_start(loop, &init_kcp_timer);
 
   ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
   ev_timer_start(loop, &kcp_update_timer);

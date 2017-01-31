@@ -447,11 +447,6 @@ void init_kcp() {
   ikcp_setmtu(kcp, KCP_MTU);
   ikcp_wndsize(kcp, KCP_MAX_WND_SIZE, KCP_MAX_WND_SIZE);
   ikcp_nodelay(kcp, kcpconfig.nodelay, kcpconfig.interval, kcpconfig.resend, kcpconfig.nc);
-
-#ifndef SERVER
-  send_packet(&packetinfo, "", 1, 0);
-  send_packet(&packetinfo, INIT_KCP, 8, 0);
-#endif
 }
 
 int iqueue_get_len(struct IQUEUEHEAD* queue) {
