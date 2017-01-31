@@ -158,6 +158,10 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
     connection->pending_send_buf_len = 0;
     free(connection->pending_send_buf);
     connection->pending_send_buf = NULL;
+    if (connection->pending_close) {
+      close_connection(connection);
+      return;
+    }
   } else {
     LOG("write_cb(): partially sent.");
     memmove(connection->pending_send_buf,
@@ -190,9 +194,9 @@ void kcp_update_interval() {
 
   pending_recv_stream_len += recv_len;
 
-  if (pending_recv_stream_len > sizeof(struct fragment_header)) {
+  if (pending_recv_stream_len >= sizeof(struct fragment_header)) {
     struct fragment_header* command_header = (struct fragment_header*)pending_recv_stream;
-    if (pending_recv_stream_len > sizeof(struct fragment_header) + command_header->length) {
+    if (pending_recv_stream_len >= sizeof(struct fragment_header) + command_header->length) {
       handle_recv_stream();
     }
   }
@@ -204,8 +208,6 @@ void handle_recv_stream() {
   char* fragment_payload = (char*)command_header + sizeof(struct fragment_header);
   int conv = command_header->conv;
   struct connection_info* connection = &connection_queue[conv];
-
-  LOG("Got message payloadlen=%d", fragment_payload_length);
 
   switch(command_header->command) {
     case CONNECTION_CONNECT:
@@ -235,6 +237,7 @@ void handle_recv_stream() {
       connection->local_fd = local_fd;
       connection->pending_send_buf = NULL;
       connection->pending_send_buf_len = 0;
+      connection->pending_close = 0;
 
       struct ev_io *local_read_io = &((connection->read_io).io);
       struct ev_io *local_write_io = &((connection->write_io).io);
@@ -286,7 +289,11 @@ void handle_recv_stream() {
         break;
       }
       LOG("Remote notifies closing. conv=%d", conv);
-      close_connection(connection);
+      if (connection->pending_send_buf == 0) {
+        close_connection(connection);
+      } else {
+        pending_close_connection(connection);
+      }
       break;
   }
 
@@ -337,6 +344,13 @@ void close_connection(struct connection_info* connection) {
   bzero(&((connection->read_io).io), sizeof(struct ev_io));
 
   connection->in_use = 0;
+  connection->pending_close = 0;
+
+}
+
+void pending_close_connection(struct connection_info* connection) {
+  LOG("Pending close connection. conv=%d", connection->conv);
+  connection->pending_close = 1;
 }
 
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {

@@ -34,6 +34,7 @@ struct connection_info {
   int pending_send_buf_len;
   struct io_wrap read_io;
   struct io_wrap write_io;
+  int pending_close;
 };
 
 struct kcp_config {
@@ -74,6 +75,7 @@ void kcp_update_interval();
 void notify_remote_connect(struct connection_info* connection);
 void notify_remote_close(struct connection_info* connection);
 void close_connection(struct connection_info* connection);
+void pending_close_connection(struct connection_info* connection);
 void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
 void LOG(const char* message, ...);

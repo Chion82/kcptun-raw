@@ -98,6 +98,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
 
   connection->pending_send_buf = NULL;
   connection->pending_send_buf_len = 0;
+  connection->pending_close = 0;
 
   LOG("New connection conv %d.", connection->conv);
 
