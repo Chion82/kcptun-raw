@@ -3,6 +3,7 @@
 #define KCP_MAX_WND_SIZE 1024
 #define MAX_CONNECTIONS 1024
 #define MAX_QUEUE_LENGTH 5000
+#define HEART_BEAT_TIMEOUT 7
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))

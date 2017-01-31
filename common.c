@@ -181,7 +181,6 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
   kcp_update_interval();
-  ev_timer_again(loop, timer);
 }
 
 void kcp_update_interval() {
@@ -392,7 +391,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     return;
   }
 
-  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > 5 * 1000) {
+  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
     packetinfo.source_port = 30000 + rand() % 10000;
@@ -402,8 +401,6 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
   }
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
-
-  ev_timer_again(loop, timer);
 }
 
 void init_kcp_mode(int argc, char* argv[]) {
