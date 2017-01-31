@@ -197,7 +197,7 @@ void kcp_update_interval() {
 
   int recv_len = ikcp_recv(kcp, recv_buf, BUFFER_SIZE);
 
-  if (iqueue_get_len(&(kcp->snd_queue)) > MAX_QUEUE_LENGTH || iqueue_get_len(&(kcp->rcv_queue)) > MAX_QUEUE_LENGTH) {
+  if (iqueue_get_len(&(kcp->snd_queue)) > MAX_QUEUE_LENGTH) {
     for (int i=0; i<MAX_CONNECTIONS; i++) {
       if (connection_queue[i].in_use) {
         ev_io_stop(loop, &((connection_queue[i].read_io).io));
