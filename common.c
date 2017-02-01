@@ -68,12 +68,13 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
   }
 
   if (packet_is_command(buffer, PUSH_DATA) && length > 8) {
+    last_recv_heart_beat = getclock();
     ikcp_input(kcp, buffer + 8, length - 8);
   }
 
 #ifdef SERVER
   if (packet_is_command(buffer, INIT_KCP)) {
-    LOG("Re-init KCP connection.");
+    LOG("Remote notifies re-init KCP connection.");
     init_kcp();
   }
 #endif
@@ -416,6 +417,7 @@ void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents)
 
 #ifndef SERVER
   if (getclock() - last_kcp_recv > KCP_RECV_TIMEOUT * 1000) {
+    LOG("KCP recv timeout. Re-init KCP connection.");
     last_kcp_recv = getclock() - 10 * 1000;
 
     init_kcp();
