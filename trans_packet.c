@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <byteswap.h>
 #include <ev.h>
+#include <openssl/aes.h>
 
 #include "trans_packet.h"
 
@@ -29,12 +30,14 @@ struct pseudo_header {
     u_int16_t tcp_length;
 };
 
-char* aes_key = "it is a secrect!";
+char* aes_ckey = "it is a secrect!";
 char* aes_vec = "1234567890123456";
 
 unsigned short csum(unsigned short *ptr,int nbytes);
 
 void init_packet(struct packet_info* packetinfo) {
+    AES_set_encrypt_key(aes_ckey, 128, &aes_key);
+
     packet_send_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
     packet_recv_sd = socket(AF_PACKET , SOCK_DGRAM , htons(ETH_P_IP));
     // packet_recv_sd = socket(AF_INET , SOCK_RAW , IPPROTO_TCP);
@@ -168,10 +171,16 @@ void check_packet_recv(struct packet_info* packetinfo) {
         (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
     }
 
-    char* data_payload_buf = buffer + iphdrlen + tcph->doff*4 + 4;
+    char* payload = buffer + iphdrlen + tcph->doff*4;
+    char* data_payload_buf = payload + 4;
     int data_payload_len = payloadlen - 4;
 
-    unsigned short data_payload_checksum = *((unsigned short*)(buffer + iphdrlen + tcph->doff*4));
+    int aes_num = 0;
+    char aes_tmp_vec[16];
+    memcpy(aes_tmp_vec, aes_vec, 16);
+    AES_cfb128_encrypt(payload, payload, payloadlen, &aes_key, aes_tmp_vec, &aes_num, AES_DECRYPT);
+
+    unsigned short data_payload_checksum = *((unsigned short*)payload);
 
     if (csum((unsigned short*)data_payload_buf, data_payload_len) != data_payload_checksum) {
         LOG("[trans_packet]Data checksum verification failed. Dropping.");
@@ -201,6 +210,11 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
         memset(payload + 2, 0x00, 2);   // 2 reserved bytes
         memcpy(payload + 4, source_payload, source_payloadlen);
         payloadlen = source_payloadlen + 4;
+
+        int aes_num = 0;
+        char aes_tmp_vec[16];
+        memcpy(aes_tmp_vec, aes_vec, 16);
+        AES_cfb128_encrypt(payload, payload, payloadlen, &aes_key, aes_tmp_vec, &aes_num, AES_ENCRYPT);
     }
 
     //zero out the packet buffer

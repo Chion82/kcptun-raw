@@ -1,3 +1,5 @@
+#include <openssl/aes.h>
+
 #define MTU 1440
 
 #define FIRST_SYN UINT_MAX - 2
@@ -23,8 +25,9 @@ struct packet_info {
 int packet_send_sd;
 int packet_recv_sd;
 
-char* aes_key;
+char* aes_ckey;
 char* aes_vec;
+AES_KEY aes_key;
 
 void init_packet(struct packet_info* packetinfo);
 int send_packet(struct packet_info* packetinfo, char* source_payload, int payloadlen, unsigned int flag);
