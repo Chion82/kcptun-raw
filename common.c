@@ -25,6 +25,8 @@
 
 char* pending_recv_stream = NULL;
 int pending_recv_stream_len = 0;
+ikcpcb *kcp = NULL;
+
 void handle_recv_stream();
 
 unsigned int getclock() {

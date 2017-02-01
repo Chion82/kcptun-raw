@@ -23,6 +23,9 @@ struct packet_info {
 int packet_send_sd;
 int packet_recv_sd;
 
+char* aes_key;
+char* aes_vec;
+
 void init_packet(struct packet_info* packetinfo);
 int send_packet(struct packet_info* packetinfo, char* source_payload, int payloadlen, unsigned int flag);
 

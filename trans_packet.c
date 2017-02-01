@@ -29,6 +29,9 @@ struct pseudo_header {
     u_int16_t tcp_length;
 };
 
+char* aes_key = "it is a secrect!";
+char* aes_vec = "1234567890123456";
+
 unsigned short csum(unsigned short *ptr,int nbytes);
 
 void init_packet(struct packet_info* packetinfo) {

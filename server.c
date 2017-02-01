@@ -124,7 +124,6 @@ int main(int argc, char* argv[]) {
   ev_timer_init(&kcp_nop_timer, kcp_nop_timer_cb, 5, 10);
   ev_timer_start(loop, &kcp_nop_timer);
 
-  kcp = NULL;
   init_kcp();
 
   ev_run(loop, 0);
