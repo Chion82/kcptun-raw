@@ -414,6 +414,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
   }
 
   if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
+    last_recv_heart_beat = getclock() - 3 * 1000;
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
     packetinfo.source_port = 30000 + rand() % 10000;
