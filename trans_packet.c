@@ -171,7 +171,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     unsigned short data_payload_checksum = *((unsigned short*)(buffer + iphdrlen + tcph->doff*4));
 
     if (csum((unsigned short*)data_payload_buf, data_payload_len) != data_payload_checksum) {
-        LOG("Data checksum verify failed. Dropping.");
+        LOG("[trans_packet]Data checksum verification failed. Dropping.");
         return;
     }
 
