@@ -213,6 +213,8 @@ void kcp_update_interval() {
     return;
   }
 
+  last_kcp_recv = getclock();
+
   pending_recv_stream = realloc(pending_recv_stream, pending_recv_stream_len + recv_len);
 
   memcpy(pending_recv_stream + pending_recv_stream_len, recv_buf, recv_len);
@@ -235,6 +237,8 @@ void handle_recv_stream() {
   struct connection_info* connection = &connection_queue[conv];
 
   switch(command_header->command) {
+    case CONNECTION_NOP:
+      break;
     case CONNECTION_CONNECT:
       if (!packetinfo.is_server) {
         break;
@@ -401,6 +405,23 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
   }
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
+}
+
+void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  struct fragment_header command_header;
+  command_header.conv = 0;
+  command_header.command = CONNECTION_NOP;
+  command_header.length = 0;
+  ikcp_send(kcp, (char*)&command_header, sizeof(struct fragment_header));
+
+#ifndef SERVER
+  if (getclock() - last_kcp_recv > KCP_RECV_TIMEOUT * 1000) {
+    last_kcp_recv = getclock() - 10 * 1000;
+
+    init_kcp();
+    send_packet(&packetinfo, INIT_KCP, 8, 0);
+  }
+#endif
 }
 
 void init_kcp_mode(int argc, char* argv[]) {

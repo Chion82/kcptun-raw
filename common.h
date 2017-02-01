@@ -4,6 +4,7 @@
 #define MAX_CONNECTIONS 1024
 #define MAX_QUEUE_LENGTH 5000
 #define HEART_BEAT_TIMEOUT 7
+#define KCP_RECV_TIMEOUT 30
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
@@ -11,6 +12,7 @@
 #define CONNECTION_CONNECT 1
 #define CONNECTION_PUSH 2
 #define CONNECTION_CLOSE 3
+#define CONNECTION_NOP 0
 #define HEART_BEAT "HARTBEAT"
 #define PUSH_DATA "PUSHDATA"
 #define INIT_KCP "INITKCP0"
@@ -49,6 +51,7 @@ struct kcp_config {
 ikcpcb *kcp;
 
 unsigned int last_recv_heart_beat;
+unsigned int last_kcp_recv;
 
 struct packet_info packetinfo;
 
@@ -59,6 +62,7 @@ struct ev_loop* loop;
 struct ev_io packet_recv_io;
 struct ev_timer kcp_update_timer;
 struct ev_timer heart_beat_timer;
+struct ev_timer kcp_nop_timer;
 
 struct kcp_config kcpconfig;
 
@@ -71,6 +75,7 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
 void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
+void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
 void kcp_update_interval();
 void notify_remote_connect(struct connection_info* connection);
 void notify_remote_close(struct connection_info* connection);

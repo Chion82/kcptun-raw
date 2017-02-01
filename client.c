@@ -130,6 +130,9 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
+  last_recv_heart_beat = 0;
+  last_kcp_recv = getclock();
+
   tcp_listen_port = atoi(argv[4]);
 
   init_kcp_mode(argc, argv);
@@ -159,6 +162,8 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  int server_fd = init_server_socket();
+
   init_packet(&packetinfo);
   set_packet_recv_nonblocking();
 
@@ -173,8 +178,6 @@ int main(int argc, char* argv[]) {
   ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
   ev_timer_start(loop, &kcp_update_timer);
 
-  int server_fd = init_server_socket();
-
   ev_io_init(&w_accept, accept_cb, server_fd, EV_READ);
   ev_io_start(loop, &w_accept);
 
@@ -183,6 +186,9 @@ int main(int argc, char* argv[]) {
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 2);
   ev_timer_start(loop, &heart_beat_timer);
+
+  ev_timer_init(&kcp_nop_timer, kcp_nop_timer_cb, 5, 10);
+  ev_timer_start(loop, &kcp_nop_timer);
 
   kcp = NULL;
   init_kcp();

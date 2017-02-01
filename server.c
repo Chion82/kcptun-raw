@@ -72,6 +72,9 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
+  last_recv_heart_beat = 0;
+  last_kcp_recv = getclock();
+
   strcpy(tcp_connect_to_ip, argv[1]);
   tcp_connect_to_port = atoi(argv[2]);
 
@@ -117,6 +120,9 @@ int main(int argc, char* argv[]) {
 
   ev_timer_init(&heart_beat_timer, heart_beat_timer_cb, 0, 2);
   ev_timer_start(loop, &heart_beat_timer);
+
+  ev_timer_init(&kcp_nop_timer, kcp_nop_timer_cb, 5, 10);
+  ev_timer_start(loop, &kcp_nop_timer);
 
   kcp = NULL;
   init_kcp();
