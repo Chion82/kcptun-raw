@@ -447,6 +447,9 @@ void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents)
       }
     }
 
+    ikcp_release(kcp);
+    kcp = NULL;
+
     ev_timer_start(loop, &init_kcp_timer);
   }
 #endif
