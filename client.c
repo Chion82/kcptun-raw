@@ -136,6 +136,7 @@ int main(int argc, char* argv[]) {
   tcp_listen_port = atoi(argv[4]);
 
   init_kcp_mode(argc, argv);
+  init_aes_key(argc, argv);
 
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     connection_queue[i].in_use = 0;

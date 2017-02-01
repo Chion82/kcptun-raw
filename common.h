@@ -85,6 +85,7 @@ void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);
 void LOG(const char* message, ...);
 void init_kcp();
+void init_aes_key(int argc, char* argv[]);
 int iqueue_get_len(struct IQUEUEHEAD* queue);
 
 int init_connect_to_socket();

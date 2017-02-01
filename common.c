@@ -467,6 +467,23 @@ void init_kcp_mode(int argc, char* argv[]) {
 
 }
 
+void init_aes_key(int argc, char* argv[]) {
+  for(int i=0; i<argc; i++) {
+    char* arg = argv[i];
+
+    if ((!strcmp(arg, "--key")) && i != argc - 1) {
+      char* key = argv[i+1];
+      if (strlen(key) != 16) {
+        printf("key must be 16 bytes long.\n");
+        exit(-1);
+      }
+      aes_ckey = malloc(16);
+      memcpy(aes_ckey, key, 16);
+    }
+
+  }
+}
+
 void LOG(const char* message, ...) {
   time_t now = time(NULL);
   char timestr[20];
