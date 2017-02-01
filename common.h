@@ -71,7 +71,7 @@ void init_kcp_mode(int argc, char* argv[]);
 unsigned int getclock();
 int setnonblocking(int fd);
 int packet_output(const char* buf, int len, ikcpcb *kcp, void *user);
-void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length, unsigned int flag);
+void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length);
 void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents);
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents);

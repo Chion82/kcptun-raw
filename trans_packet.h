@@ -14,7 +14,7 @@ struct packet_info {
   char source_ip[128];
   uint16_t dest_port;
   uint16_t source_port;
-  void (*on_packet_recv)(char*, uint16_t, char*, int, unsigned int);
+  void (*on_packet_recv)(char*, uint16_t, char*, int);
   int is_server;
   struct trans_packet_state state;
   int disable_seq_update;

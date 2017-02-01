@@ -165,9 +165,17 @@ void check_packet_recv(struct packet_info* packetinfo) {
         (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
     }
 
-    unsigned int flag = *((unsigned int*)(buffer + iphdrlen + tcph->doff*4));
+    char* data_payload_buf = buffer + iphdrlen + tcph->doff*4 + 4;
+    int data_payload_len = payloadlen - 4;
 
-    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), buffer + iphdrlen + tcph->doff*4 + 4, payloadlen - 4, flag);
+    unsigned short data_payload_checksum = *((unsigned short*)(buffer + iphdrlen + tcph->doff*4));
+
+    if (csum((unsigned short*)data_payload_buf, data_payload_len) != data_payload_checksum) {
+        LOG("Data checksum verify failed. Dropping.");
+        return;
+    }
+
+    (*(packetinfo->on_packet_recv))(inet_ntoa(from_addr), ntohs(tcph->source), data_payload_buf, data_payload_len);
 
 }
 
@@ -185,7 +193,9 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
 
     if (flag < UINT_MAX - 2) {
         payload = malloc(source_payloadlen + 4);
-        memcpy(payload, &flag, 4);
+        unsigned short data_payload_checksum = csum((unsigned short*)source_payload, source_payloadlen);
+        memcpy(payload, &data_payload_checksum, 2);
+        memset(payload + 2, 0x00, 2);   // 2 reserved bytes
         memcpy(payload + 4, source_payload, source_payloadlen);
         payloadlen = source_payloadlen + 4;
     }

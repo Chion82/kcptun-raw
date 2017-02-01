@@ -51,7 +51,7 @@ int packet_is_command(char* packet_buf, const char* command) {
   return 1;
 }
 
-void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length, unsigned int identifier) {
+void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int length) {
 
   if (length < 8) {
     return;
