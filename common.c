@@ -71,13 +71,24 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
 
   if (packet_is_command(buffer, PUSH_DATA) && length > 8) {
     last_recv_heart_beat = getclock();
-    ikcp_input(kcp, buffer + 8, length - 8);
+    if (kcp != NULL) {
+      ikcp_input(kcp, buffer + 8, length - 8);
+    }
   }
 
 #ifdef SERVER
   if (packet_is_command(buffer, INIT_KCP)) {
     LOG("Remote notifies re-init KCP connection.");
     init_kcp();
+    send_packet(&packetinfo, KCP_READY, 8, 0);
+  }
+#endif
+
+#ifndef SERVER
+  if (packet_is_command(buffer, KCP_READY)) {
+    LOG("kcp ready.");
+    init_kcp();
+    ev_timer_stop(loop, &init_kcp_timer);
   }
 #endif
 
@@ -188,6 +199,10 @@ void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
 
 void kcp_update_interval() {
   char recv_buf[BUFFER_SIZE];
+
+  if (kcp == NULL) {
+    return;
+  }
 
   ikcp_update(kcp, getclock());
 
@@ -411,6 +426,9 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
 }
 
 void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  if (kcp == NULL) {
+    return;
+  }
   struct fragment_header command_header;
   command_header.conv = 0;
   command_header.command = CONNECTION_NOP;
@@ -422,8 +440,13 @@ void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents)
     LOG("KCP recv timeout. Re-init KCP connection.");
     last_kcp_recv = getclock() - 10 * 1000;
 
-    init_kcp();
-    send_packet(&packetinfo, INIT_KCP, 8, 0);
+    for (int i=0; i<MAX_CONNECTIONS; i++) {
+      if (connection_queue[i].in_use) {
+        close_connection(&(connection_queue[i]));
+      }
+    }
+
+    ev_timer_start(loop, &init_kcp_timer);
   }
 #endif
 }

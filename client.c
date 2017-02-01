@@ -82,6 +82,12 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
     return;
   }
 
+  if (kcp == NULL) {
+    LOG("kcp not ready. waiting.");
+    close(local_fd);
+    return;
+  }
+
   setnonblocking(local_fd);
 
 
@@ -116,6 +122,7 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
 }
 
 void re_init_kcp_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  LOG("Request kcp init");
   send_packet(&packetinfo, INIT_KCP, 8, 0);
 }
 
@@ -171,9 +178,8 @@ int main(int argc, char* argv[]) {
   loop = ev_default_loop(0);
 
   struct ev_io w_accept;
-  struct ev_timer init_kcp_timer;
 
-  ev_timer_init(&init_kcp_timer, re_init_kcp_cb, 1, 0);
+  ev_timer_init(&init_kcp_timer, re_init_kcp_cb, 1, 2);
   ev_timer_start(loop, &init_kcp_timer);
 
   ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
@@ -191,7 +197,7 @@ int main(int argc, char* argv[]) {
   ev_timer_init(&kcp_nop_timer, kcp_nop_timer_cb, 5, 10);
   ev_timer_start(loop, &kcp_nop_timer);
 
-  init_kcp();
+  // init_kcp();
 
   ev_run(loop, 0);
 

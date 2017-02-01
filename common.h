@@ -16,6 +16,7 @@
 #define HEART_BEAT "HARTBEAT"
 #define PUSH_DATA "PUSHDATA"
 #define INIT_KCP "INITKCP0"
+#define KCP_READY "KCPREADY"
 #define IS_VALID_PACKET(payload) (is_packet_command((payload), CONNECTION_CONNECT) || is_packet_command((payload), CONNECTION_PUSH) || is_packet_command((payload), CONNECTION_CLOSE) || is_packet_command((payload), HEART_BEAT))
 #define is_valid_packet IS_VALID_PACKET
 
@@ -63,6 +64,7 @@ struct ev_io packet_recv_io;
 struct ev_timer kcp_update_timer;
 struct ev_timer heart_beat_timer;
 struct ev_timer kcp_nop_timer;
+struct ev_timer init_kcp_timer;
 
 struct kcp_config kcpconfig;
 
