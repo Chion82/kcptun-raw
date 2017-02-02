@@ -44,7 +44,7 @@ $ sslocal -s 127.0.0.1 -p 8388 -k YOUR_SS_KEY
 如果客户端log中有大量`Re-init fake TCP connection`并且频繁断流，请尝试在客户端和服务端的命令都添加`--noseq`参数。
 
 可选参数说明：  
-* `[--mode]` 加速模式，取值为`normal/fast/fast2/fast3`。默认为`fast3`。  
+* `[--mode MODE]` 加速模式，取值为`normal/fast/fast2/fast3`。默认为`fast3`。  
 * `[--noseq]` 如果添加该参数，则取消伪TCP头的seq/ack自增，可避免部分ISP环境下的断流情况。  
 * `[--key 16_BYTES_KEY]` AES128密钥，长度必须为16字节。默认为`it is a secrect!`。  
 
