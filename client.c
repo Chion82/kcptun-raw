@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
   srand(time(NULL));
 
   if (argc < 5) {
-    printf("Usage: ./client_bin SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [mode] [noseq]\n");
+    printf("Usage: ./client_bin SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--mode MODE] [--key KEY] [--noseq]\n");
     exit(1);
   }
 
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
   packetinfo.disable_seq_update = 0;
 
   for (int i=0; i<argc; i++) {
-    if (!strcmp(argv[i], "noseq")) {
+    if (!strcmp(argv[i], "--noseq")) {
       LOG("Disable TCP sequense counter.");
       packetinfo.disable_seq_update = 1;
     }

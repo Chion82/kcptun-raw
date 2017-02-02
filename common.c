@@ -463,32 +463,37 @@ void init_kcp_mode(int argc, char* argv[]) {
   kcpconfig.nc = 1;
 
   for(int i=0; i<argc; i++) {
-    char* arg = argv[i];
+    if ((!strcmp(argv[i], "--mode")) && i != argc -1) {
+      char* arg = argv[i + 1];
 
-    if (!strcmp(arg, "normal")) {
-      LOG("normal mode enabled.");
-      kcpconfig.nodelay = 0;
-      kcpconfig.interval = 30;
-      kcpconfig.resend = 2;
-      kcpconfig.nc = 1;
-    } else if (!strcmp(arg, "fast")) {
-      LOG("fast mode enabled.");
-      kcpconfig.nodelay = 0;
-      kcpconfig.interval = 20;
-      kcpconfig.resend = 2;
-      kcpconfig.nc = 1;
-    } else if (!strcmp(arg, "fast2")) {
-      LOG("fast2 mode enabled.");
-      kcpconfig.nodelay = 1;
-      kcpconfig.interval = 20;
-      kcpconfig.resend = 2;
-      kcpconfig.nc = 1;
-    } else if (!strcmp(arg, "fast3")) {
-      LOG("fast3 mode enabled.");
-      kcpconfig.nodelay = 1;
-      kcpconfig.interval = 10;
-      kcpconfig.resend = 2;
-      kcpconfig.nc = 1;
+      if (!strcmp(arg, "normal")) {
+        LOG("normal mode enabled.");
+        kcpconfig.nodelay = 0;
+        kcpconfig.interval = 30;
+        kcpconfig.resend = 2;
+        kcpconfig.nc = 1;
+      } else if (!strcmp(arg, "fast")) {
+        LOG("fast mode enabled.");
+        kcpconfig.nodelay = 0;
+        kcpconfig.interval = 20;
+        kcpconfig.resend = 2;
+        kcpconfig.nc = 1;
+      } else if (!strcmp(arg, "fast2")) {
+        LOG("fast2 mode enabled.");
+        kcpconfig.nodelay = 1;
+        kcpconfig.interval = 20;
+        kcpconfig.resend = 2;
+        kcpconfig.nc = 1;
+      } else if (!strcmp(arg, "fast3")) {
+        LOG("fast3 mode enabled.");
+        kcpconfig.nodelay = 1;
+        kcpconfig.interval = 10;
+        kcpconfig.resend = 2;
+        kcpconfig.nc = 1;
+      } else {
+        LOG("Unsupported mode. (normal/fast/fast2/fast3)");
+        exit(1);
+      }
     }
   }
 

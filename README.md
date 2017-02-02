@@ -13,8 +13,8 @@ $ make
 ```
 
 ```
-# ./server TARGET_IP TARGET_PORT SERVER_IP SERVER_PORT [--key 16_BYTES_KEY] [mode] [noseq]
-# ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--key 16_BYTES_KEY] [mode] [noseq]
+# ./server TARGET_IP TARGET_PORT SERVER_IP SERVER_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
+# ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
 ```
 
 假设服务器IP为108.8.8.1，80端口上有web服务，伪TCP头的端口为888；  
@@ -33,11 +33,11 @@ $ make
 $ curl localhost:9999
 ```
 
-如果客户端log中有大量`Re-init fake TCP connection`，请尝试在客户端和服务端的命令最后都添加`noseq`参数。
+如果客户端log中有大量`Re-init fake TCP connection`，请尝试在客户端和服务端的命令都添加`--noseq`参数。
 
 可选参数说明：  
-* `[mode]` 加速模式，取值为`normal/fast/fast2/fast3`其中一个。默认为`fast3`。  
-* `[noseq]` 取值为`noseq`，如果添加该参数，则取消伪TCP头的sequence自增，可避免部分ISP环境下的断流情况。  
+* `[--mode]` 加速模式，取值为`normal/fast/fast2/fast3`。默认为`fast3`。  
+* `[--noseq]` 如果添加该参数，则取消伪TCP头的sequence自增，可避免部分ISP环境下的断流情况。  
 * `[--key 16_BYTES_KEY]` AES128密钥，长度必须为16字节。默认为`it is a secrect!`。  
 
 分层示意图
