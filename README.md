@@ -17,20 +17,18 @@ $ make
 # ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
 ```
 
-假设服务器IP为108.8.8.1，80端口上有web服务，伪TCP头的端口为888；  
-本地机器IP为192.168.1.100（通常是路由器分配的IP，不能使用127.0.0.1），TCP监听端口为9999。
-
+Example:  
+将`108.0.0.1`替换为服务器IP，`192.168.1.100`替换为客户端IP（通常是路由器分配的内网IP，不能使用`127.0.0.1`）
 服务端：
 ```
 # iptables -A INPUT -p tcp --dport 888 -j DROP
-# ./server 127.0.0.1 80 108.8.8.1 888 fast2
+# ./server 127.0.0.1 8388 108.0.0.1 888 --mode fast2
 ```
-
 客户端：
 ```
-# iptables -A INPUT -p tcp -s 108.8.8.1 --sport 888 -j DROP
-# ./client 108.8.8.1 888 192.168.1.100 9999 fast2
-$ curl localhost:9999
+# iptables -A INPUT -p tcp -s 108.0.0.1 --sport 888 -j DROP
+# ./client 108.0.0.1 888 192.168.1.100 8388 --mode fast2
+$ sslocal -s 127.0.0.1 -p 8388 -k YOUR_SS_KEY
 ```
 
 如果客户端log中有大量`Re-init fake TCP connection`，请尝试在客户端和服务端的命令都添加`--noseq`参数。
