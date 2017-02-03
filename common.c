@@ -336,7 +336,7 @@ void handle_recv_stream() {
         break;
       }
       LOG("Remote notifies closing. conv=%d", conv);
-      if (connection->pending_send_buf == 0) {
+      if (connection->pending_send_buf_len == 0) {
         close_connection(connection);
       } else {
         pending_close_connection(connection);
@@ -385,6 +385,7 @@ void close_connection(struct connection_info* connection) {
   if (connection->pending_send_buf != NULL) {
     free(connection->pending_send_buf);
   }
+  connection->pending_send_buf = NULL;
   connection->pending_send_buf_len = 0;
 
   bzero(&((connection->write_io).io), sizeof(struct ev_io));
