@@ -533,6 +533,12 @@ void init_kcp() {
     ikcp_release(kcp);
   }
 
+  if (pending_recv_stream != NULL) {
+    free(pending_recv_stream);
+  }
+  pending_recv_stream = NULL;
+  pending_recv_stream_len = 0;
+
   kcp = ikcp_create(0, NULL);
   kcp->output = packet_output;
   ikcp_setmtu(kcp, KCP_MTU);
