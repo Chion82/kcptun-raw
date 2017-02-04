@@ -527,6 +527,7 @@ void LOG(const char* message, ...) {
   vfprintf(stdout, message, argptr);
   va_end(argptr);
   printf("\n");
+  fflush(stdout);
 }
 
 void init_kcp() {
