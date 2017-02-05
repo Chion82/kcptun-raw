@@ -99,7 +99,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
 
     struct iphdr *iph = (struct iphdr *)buffer;
 
-    if (iph->ihl != 5) {
+    if (!(iph->ihl > 0 && iph->ihl < (MTU)/4)) {
         return;
     }
 
@@ -112,7 +112,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
 
     struct tcphdr *tcph=(struct tcphdr*)(buffer + iphdrlen);
 
-    if (tcph->doff != 5) {
+    if (!(tcph->doff > 0 && tcph->doff < (MTU - iphdrlen)/4)) {
         return;
     }
 
