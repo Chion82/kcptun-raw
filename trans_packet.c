@@ -98,15 +98,23 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
     struct iphdr *iph = (struct iphdr *)buffer;
-    iphdrlen =iph->ihl*4;
+
+    if (iph->ihl != 5) {
+        return;
+    }
 
     if (iph->protocol != IPPROTO_TCP) {
         return;
     }
 
+    iphdrlen =iph->ihl*4;
     from_addr.s_addr = iph->saddr;
 
     struct tcphdr *tcph=(struct tcphdr*)(buffer + iphdrlen);
+
+    if (tcph->doff != 5) {
+        return;
+    }
 
     if (ntohs(tcph->dest) != packetinfo->source_port) {
         return;
