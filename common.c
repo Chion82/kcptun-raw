@@ -59,10 +59,10 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
     return;
   }
 
-  if (packetinfo.is_server) {
-    strcpy(packetinfo.dest_ip, from_addr);
-    packetinfo.dest_port = from_port;
-  }
+#ifdef SERVER
+  strcpy(packetinfo.dest_ip, from_addr);
+  packetinfo.dest_port = from_port;
+#endif
 
   if (packet_is_command(buffer, HEART_BEAT)) {
     last_recv_heart_beat = getclock();
@@ -257,13 +257,10 @@ void handle_recv_stream() {
   switch(command_header->command) {
     case CONNECTION_NOP:
       break;
-    case CONNECTION_CONNECT:
-      if (!packetinfo.is_server) {
-        break;
-      }
 
 #ifdef SERVER
 
+    case CONNECTION_CONNECT:
       LOG("Remote notifies new connection. conv=%d", conv);
 
       if (connection->in_use) {
@@ -294,9 +291,9 @@ void handle_recv_stream() {
       ev_io_start(loop, local_read_io);
       ev_io_start(loop, local_write_io);
 
-#endif
-
       break;
+
+#endif
 
     case CONNECTION_PUSH:
       if (!(connection->in_use)) {
@@ -414,7 +411,9 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     return;
   }
 
-  if (packetinfo.is_server == 0 && getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
+#ifndef SERVER
+  
+  if (getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
     last_recv_heart_beat = getclock() - 3 * 1000;
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
@@ -423,6 +422,8 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     send_packet(&packetinfo, "", 0, FIRST_SYN);
     return;
   }
+
+#endif
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
 }
