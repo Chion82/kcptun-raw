@@ -27,6 +27,10 @@ char* pending_recv_stream = NULL;
 int pending_recv_stream_len = 0;
 ikcpcb *kcp = NULL;
 
+#ifndef SERVER
+int temp_port_sd = -1;
+#endif
+
 void handle_recv_stream();
 
 unsigned int getclock() {
@@ -412,13 +416,34 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
   }
 
 #ifndef SERVER
+
+  struct sockaddr_in temp_bind_addr;
   
   if (getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
     last_recv_heart_beat = getclock() - 3 * 1000;
     (packetinfo.state).seq = 0;
     (packetinfo.state).ack = 1;
-    packetinfo.source_port = 30000 + rand() % 10000;
     LOG("Re-init fake TCP connection.");
+
+    do {
+      // Find an unused port by binding and listening.
+      // By this way we tell the kernel the port is occupied.
+      if (temp_port_sd != -1) {
+        close(temp_port_sd);
+      }
+      packetinfo.source_port = 30000 + rand() % 10000;
+
+      temp_port_sd = socket(PF_INET, SOCK_STREAM, 0);
+      bzero(&temp_bind_addr, sizeof(temp_bind_addr));
+      temp_bind_addr.sin_family = AF_INET;
+      temp_bind_addr.sin_port = htons(packetinfo.source_port);
+      temp_bind_addr.sin_addr.s_addr = INADDR_ANY;
+
+      LOG("Trying port %d", packetinfo.source_port);
+
+    } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
+      || listen(temp_port_sd, SOMAXCONN) != 0);
+
     send_packet(&packetinfo, "", 0, FIRST_SYN);
     return;
   }
