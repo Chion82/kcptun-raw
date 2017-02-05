@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
   ev_timer_init(&init_kcp_timer, re_init_kcp_cb, 1, 2);
   ev_timer_start(loop, &init_kcp_timer);
 
-  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.003);
+  ev_timer_init(&kcp_update_timer, kcp_update_timer_cb, 0.1, 0.01);
   ev_timer_start(loop, &kcp_update_timer);
 
   ev_io_init(&w_accept, accept_cb, server_fd, EV_READ);
