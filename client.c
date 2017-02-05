@@ -53,7 +53,7 @@ int init_server_socket() {
   }
 
   // Start listing on the socket
-  if (listen(sd, 2) < 0) {
+  if (listen(sd, SOMAXCONN) < 0) {
     perror("listen error");
     exit(-1);
     return -1;
