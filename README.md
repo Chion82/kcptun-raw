@@ -1,7 +1,7 @@
 kcptun-raw
 ----------
 为缓解部分ISP对UDP断流的问题，通过伪造TCP报文，实现了简化版的 [kcptun](https://github.com/xtaci/kcptun)。  
-客户端到服务端的底层通信方式为带伪TCP报头的IP packet，通过raw socket实现。
+客户端和服务端进程的直接通信方式为带伪TCP报头的IP packet，通过raw socket实现，需要通过iptables绕过内核协议栈。
 
 Inspired by [linhua55/some_kcptun_tools/relayRawSocket](https://github.com/linhua55/some_kcptun_tools/tree/master/relayRawSocket) .
 
@@ -11,8 +11,8 @@ Features
 * 两层心跳保活、快速恢复、更改随机端口重连，不容易卡死。  
 * 满载速率可达到100Mbps。  
 * AES_CFB128加密帧。  
-* FEC简化为checksum查错（通常误包率很低）。  
-* 取消了session层，请注意一个服务端进程对应一个客户端进程，如需建立多隧道或多客户端，请换个端口运行多个服务端进程。  
+* 取消了FEC，丢包处理策略直接由kcp负责。  
+* 请注意一个服务端进程对应一个客户端进程，如需建立多隧道或多客户端，请换个端口运行多个服务端进程。  
 * 暂时仅支持linux，可配置虚拟机并让真机连接至虚拟机。  
 
 Usage
