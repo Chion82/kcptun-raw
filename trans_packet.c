@@ -144,7 +144,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 #endif
 
-    if(size < sizeof(struct iphdr) + sizeof(struct tcphdr) + 4) {
+    if(size < iphdrlen + tcphdrlen + 4) {
         return;
     }
 
@@ -167,7 +167,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     psh.dest_address = iph->daddr;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_TCP;
-    psh.tcp_length = htons(sizeof(struct tcphdr) + payloadlen );
+    psh.tcp_length = htons(tcphdrlen + payloadlen);
 
     memcpy(pseudogram, &psh, sizeof(struct pseudo_header));
     memcpy(pseudogram + sizeof(struct pseudo_header), pseudo_tcp_buffer, size - iphdrlen);
@@ -177,7 +177,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     free(pseudogram);
 
     if (tcp_checksum != tcph->check) {
-        // printf("[trans_packet]TCP checksum failed.\n");
+        // LOG("[trans_packet]TCP checksum validation failed, dropping.");
         return;
     }
 
@@ -197,7 +197,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     unsigned short data_payload_checksum = *((unsigned short*)payload);
 
     if (csum((unsigned short*)data_payload_buf, data_payload_len) != data_payload_checksum) {
-        LOG("[trans_packet]Data checksum verification failed. Dropping.");
+        LOG("[trans_packet]Data checksum validation failed. Dropping.");
         return;
     }
 
