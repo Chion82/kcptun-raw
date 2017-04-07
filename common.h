@@ -1,7 +1,9 @@
+#include "vector.h"
+
 #define KCP_MTU (MTU - 40 - 4 - 20)
 #define BUFFER_SIZE (KCP_MTU - 30)
 #define KCP_MAX_WND_SIZE 1024
-#define MAX_CONNECTIONS 2048
+#define MAX_CONNECTIONS 8192
 #define MAX_QUEUE_LENGTH 5000
 #define HEART_BEAT_TIMEOUT 7
 #define KCP_RECV_TIMEOUT 30
@@ -57,6 +59,8 @@ unsigned int last_kcp_recv;
 struct packet_info packetinfo;
 
 struct connection_info connection_queue[MAX_CONNECTIONS];
+
+vector open_connections_vector;
 
 struct ev_loop* loop;
 

@@ -67,6 +67,8 @@ int main(int argc, char* argv[]) {
   signal(SIGPIPE, SIG_IGN);
   srand(time(NULL));
 
+  vector_init(&open_connections_vector);
+
   if (argc < 5) {
     printf("Usage: ./server_bin TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [--mode MODE] [--key KEY] [--noseq]\n");
     exit(1);

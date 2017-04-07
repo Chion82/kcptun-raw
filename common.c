@@ -21,6 +21,7 @@
 #include "ikcp.h"
 #include "trans_packet.h"
 
+#include "vector.h"
 #include "common.h"
 
 char* pending_recv_stream = NULL;
@@ -210,8 +211,11 @@ void kcp_update_interval() {
 
   ikcp_update(kcp, getclock());
 
-  for (int i=0; i<MAX_CONNECTIONS; i++) {
-    if (connection_queue[i].in_use && connection_queue[i].pending_send_buf_len > MAX_QUEUE_LENGTH * BUFFER_SIZE) {
+  struct connection_info* connection = NULL;
+
+  for (int i = 0; i < vector_total(&open_connections_vector); i++) {
+    connection = vector_get(&open_connections_vector, i);
+    if (connection->in_use && (connection->pending_send_buf_len) > MAX_QUEUE_LENGTH * BUFFER_SIZE) {
       return;
     }
   }
@@ -220,14 +224,15 @@ void kcp_update_interval() {
 
   int stop_recv = (iqueue_get_len(&(kcp->snd_queue)) > MAX_QUEUE_LENGTH) ? 1 : 0;
 
-  for (int i=0; i<MAX_CONNECTIONS; i++) {
-    if (!(connection_queue[i].in_use)) {
+  for (int i = 0; i < vector_total(&open_connections_vector); i++) {
+    connection = vector_get(&open_connections_vector, i);
+    if (!(connection->in_use)) {
       continue;
     }
     if (stop_recv) {
-      ev_io_stop(loop, &((connection_queue[i].read_io).io));
+      ev_io_stop(loop, &((connection->read_io).io));
     } else {
-      ev_io_start(loop, &((connection_queue[i].read_io).io));
+      ev_io_start(loop, &((connection->read_io).io));
     }
   }
 
@@ -286,6 +291,8 @@ void handle_recv_stream() {
       connection->pending_send_buf = NULL;
       connection->pending_send_buf_len = 0;
       connection->pending_close = 0;
+
+      vector_add(&open_connections_vector, connection);
 
       struct ev_io *local_read_io = &((connection->read_io).io);
       struct ev_io *local_write_io = &((connection->write_io).io);
@@ -394,6 +401,12 @@ void close_connection(struct connection_info* connection) {
 
   connection->in_use = 0;
   connection->pending_close = 0;
+
+  for (int i = vector_total(&open_connections_vector) - 1; i>=0; i--) {
+    if (vector_get(&open_connections_vector, i) == connection) {
+      vector_delete(&open_connections_vector, i);
+    }
+  }
 
 }
 
@@ -559,6 +572,12 @@ void LOG(const char* message, ...) {
 void init_kcp() {
   if (kcp != NULL) {
     ikcp_release(kcp);
+  }
+
+  for (int i=0; i<MAX_CONNECTIONS; i++) {
+    if (connection_queue[i].in_use) {
+      close_connection(&(connection_queue[i]));
+    }
   }
 
   if (pending_recv_stream != NULL) {
