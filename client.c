@@ -45,6 +45,9 @@ int init_server_socket() {
   addr.sin_port = htons(tcp_listen_port);
   addr.sin_addr.s_addr = INADDR_ANY;
 
+  int option = 1;
+  setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+
   // Bind socket to address
   if (bind(sd, (struct sockaddr*) &addr, sizeof(addr)) != 0) {
     perror("bind error");
