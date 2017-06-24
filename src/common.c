@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <ev.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <errno.h>

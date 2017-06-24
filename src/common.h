@@ -1,5 +1,16 @@
 #include "vector.h"
 
+#ifdef HAVE_CONFIG_H
+  #include "config.h"
+  #ifdef HAVE_EV_H
+    #include <ev.h>
+  #else
+    #ifdef HAVE_LIBEV_EV_H
+      #include <libev/ev.h>
+    #endif
+  #endif
+#endif
+
 #define KCP_MTU (MTU - 40 - 4 - 20)
 #define BUFFER_SIZE (KCP_MTU - 30)
 #define KCP_MAX_WND_SIZE 1024

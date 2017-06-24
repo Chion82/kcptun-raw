@@ -10,7 +10,6 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <ev.h>
 #include <openssl/aes.h>
 
 #include "trans_packet.h"
