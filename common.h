@@ -23,9 +23,9 @@
 #define is_valid_packet IS_VALID_PACKET
 
 struct fragment_header {
-  int conv;
+  unsigned int conv;
   char command; 
-  int length;
+  unsigned int length;
 };
 
 struct io_wrap {

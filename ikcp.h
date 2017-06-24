@@ -228,23 +228,27 @@ typedef struct IQUEUEHEAD iqueue_head;
 // WORD ORDER
 //---------------------------------------------------------------------
 #ifndef IWORDS_BIG_ENDIAN
-    #ifdef _BIG_ENDIAN_
-        #if _BIG_ENDIAN_
-            #define IWORDS_BIG_ENDIAN 1
-        #endif
-    #endif
-    #ifndef IWORDS_BIG_ENDIAN
-        #if defined(__hppa__) || \
-            defined(__m68k__) || defined(mc68000) || defined(_M_M68K) || \
-            (defined(__MIPS__) && defined(__MISPEB__)) || \
-            defined(__ppc__) || defined(__POWERPC__) || defined(_M_PPC) || \
-            defined(__sparc__) || defined(__powerpc__) || \
-            defined(__mc68000__) || defined(__s390x__) || defined(__s390__)
-            #define IWORDS_BIG_ENDIAN 1
-        #endif
-    #endif
-    #ifndef IWORDS_BIG_ENDIAN
-        #define IWORDS_BIG_ENDIAN  0
+    #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
+        defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ || \
+        defined(__BIG_ENDIAN__) || \
+        defined(__ARMEB__) || \
+        defined(__THUMBEB__) || \
+        defined(__AARCH64EB__) || \
+        defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+        // It's a big-endian target architecture
+        #define IWORDS_BIG_ENDIAN 1
+    #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \
+        defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ || \
+        defined(__LITTLE_ENDIAN__) || \
+        defined(__ARMEL__) || \
+        defined(__THUMBEL__) || \
+        defined(__AARCH64EL__) || \
+        defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+        // It's a little-endian target architecture
+        #define IWORDS_BIG_ENDIAN 0
+    #else
+        // #error "Can not determining  what architecture this is!"
+        #define IWORDS_BIG_ENDIAN 0
     #endif
 #endif
 

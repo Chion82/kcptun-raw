@@ -10,7 +10,6 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <byteswap.h>
 #include <ev.h>
 #include <openssl/aes.h>
 
@@ -182,7 +181,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
     if (!(packetinfo->disable_seq_update)) {
-        (packetinfo->state).ack = __bswap_32(tcph->seq) + payloadlen;
+        (packetinfo->state).ack = ntohl(tcph->seq) + payloadlen;
     }
 
     char* payload = buffer + iphdrlen + tcphdrlen;
@@ -267,8 +266,8 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     //TCP Header
     tcph->source = htons(packetinfo->source_port);
     tcph->dest = sin.sin_port;
-    tcph->seq = __bswap_32((packetinfo->state).seq);
-    tcph->ack_seq = __bswap_32((packetinfo->state).ack);
+    tcph->seq = htonl((packetinfo->state).seq);
+    tcph->ack_seq = htonl((packetinfo->state).ack);
     tcph->doff = 5;  //tcp header size
     tcph->fin=0;
     tcph->syn=0;
@@ -291,7 +290,7 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
 
     if (flag == REPLY_SYN_ACK) {
         tcph->seq = 0;
-        tcph->ack_seq = __bswap_32(1);
+        tcph->ack_seq = htonl(1);
         tcph->syn = 1;
         tcph->ack = 1;
         tcph->psh=0;
@@ -299,8 +298,8 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     }
 
     if (flag == REPLY_ACK) {
-        tcph->seq = __bswap_32(1);
-        tcph->ack_seq = __bswap_32(1);
+        tcph->seq = htonl(1);
+        tcph->ack_seq = htonl(1);
         tcph->syn = 0;
         tcph->ack = 1;
         tcph->psh=0;
