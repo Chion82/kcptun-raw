@@ -29,9 +29,9 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
 # Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
-AC_CHECK_FUNCS([bzero gettimeofday inet_ntoa memmove memset socket])
+# AC_FUNC_MALLOC
+# AC_FUNC_REALLOC
+AC_CHECK_FUNCS([malloc realloc bzero gettimeofday inet_ntoa memmove memset socket])
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
