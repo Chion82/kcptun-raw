@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE([subdir-objects])
 
 # Checks for programs.
 AC_PROG_CC
-AM_PROG_CC_C_O 
+AM_PROG_CC_C_O
 
 # Checks for libraries.
 AC_CHECK_LIB([ev], [ev_loop_destroy], [], [AC_MSG_ERROR([Couldn't find libev.])])
@@ -18,8 +18,13 @@ AC_CHECK_LIB([crypto], [AES_cfb128_encrypt], [], [AC_MSG_ERROR([Couldn't find li
 AC_PROG_RANLIB
 
 # Checks for header files.
-AC_CHECK_HEADERS([ev.h libev/ev.h])
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h])
+AC_CHECK_HEADERS([ev.h], [], [
+  AC_CHECK_HEADERS([libev/ev.h], [], [
+    AC_MSG_ERROR([libev header files not found.])
+  ])
+])
+AC_CHECK_HEADERS([openssl/aes.h], [], [AC_MSG_ERROR([openssl header files not found.])])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stddef.h stdint.h stdlib.h string.h sys/socket.h sys/time.h unistd.h], [], [AC_MSG_ERROR([missing POSIX header files.])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
