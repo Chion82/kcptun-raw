@@ -1,7 +1,7 @@
 kcptun-raw
 ----------
 为缓解部分ISP对UDP断流的问题，通过伪造TCP报文，实现了简化版的 [kcptun](https://github.com/xtaci/kcptun)。  
-客户端和服务端进程的直接通信方式为带伪TCP报头的IP packet，通过raw socket实现，需要通过iptables绕过内核协议栈。
+kcp的下层通信方式是带伪TCP报头的packet，通过raw socket实现，需要通过iptables绕过内核协议栈。
 
 Inspired by [linhua55/some_kcptun_tools/relayRawSocket](https://github.com/linhua55/some_kcptun_tools/tree/master/relayRawSocket) .
 
