@@ -5,6 +5,9 @@ kcp的下层通信方式是带伪TCP报头的packet，通过raw socket实现，�
 
 Inspired by [linhua55/some_kcptun_tools/relayRawSocket](https://github.com/linhua55/some_kcptun_tools/tree/master/relayRawSocket) .
 
+**Updates:**  
+GNU build、大小端适配（for ARM）仍在测试中，可试用 [GNU 分支](https://github.com/Chion82/kcptun-raw/tree/feature/gnu)
+
 Features
 --------
 * 模拟TCP三次握手、动态seq/ack（有时需要关闭），以适应各种ISP环境。  
