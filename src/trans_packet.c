@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <openssl/aes.h>
+#include <linux/filter.h>
 
 #include "trans_packet.h"
 
@@ -32,6 +33,35 @@ char* aes_ckey = "it is a secrect!";
 char* aes_vec = "1234567890123456";
 
 unsigned short csum(unsigned short *ptr,int nbytes);
+
+struct sock_filter code_tcp[] = {
+    { 0x30, 0, 0, 0x00000009 },
+    { 0x15, 0, 4, 0x00000006 },
+    { 0xb1, 0, 0, 0x00000000 },
+    { 0x48, 0, 0, 0x00000002 },
+    { 0x15, 0, 1, 0x0000fffe },
+    { 0x6, 0, 0, 0x0000ffff },
+    { 0x6, 0, 0, 0x00000000 },
+};
+
+int code_tcp_port_index = 4;
+
+void init_bpf() {
+    struct sock_fprog bpf;
+
+    bpf.len = sizeof(code_tcp)/sizeof(code_tcp[0]);
+    code_tcp[code_tcp_port_index].k = packetinfo.source_port;
+    bpf.filter = code_tcp;
+    int dummy;
+
+    int ret=setsockopt(packet_recv_sd, SOL_SOCKET, SO_DETACH_FILTER, &dummy, sizeof(dummy));
+
+    ret = setsockopt(packet_recv_sd, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf));
+    if (ret != 0) {
+        LOG("Error: SO_ATTACH_FILTER");
+        exit(-1);
+    }
+}
 
 void init_packet(struct packet_info* packetinfo) {
     AES_set_encrypt_key(aes_ckey, 128, &aes_key);
@@ -55,6 +85,8 @@ void init_packet(struct packet_info* packetinfo) {
 
     (packetinfo->state).seq = 0;
     (packetinfo->state).ack = 1;
+
+    init_bpf();
 
 }
 

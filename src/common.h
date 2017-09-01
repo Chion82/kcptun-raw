@@ -106,3 +106,5 @@ void init_aes_key(int argc, char* argv[]);
 int iqueue_get_len(struct IQUEUEHEAD* queue);
 
 int init_connect_to_socket();
+
+void init_bpf();

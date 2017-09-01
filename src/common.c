@@ -456,6 +456,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
       || listen(temp_port_sd, SOMAXCONN) != 0);
 
+    init_bpf();
     send_packet(&packetinfo, "", 0, FIRST_SYN);
     return;
   }
