@@ -68,12 +68,12 @@ Usage
 服务端：
 ```
 # iptables -A INPUT -p tcp --dport 888 -j DROP
-# ./server 127.0.0.1 8388 108.0.0.1 888 --mode fast2
+# kcpraw_server 127.0.0.1 8388 108.0.0.1 888 --mode fast2
 ```
 客户端：
 ```
 # iptables -A INPUT -p tcp -s 108.0.0.1 --sport 888 -j DROP
-# ./client 108.0.0.1 888 192.168.1.100 8388 --mode fast2
+# kcpraw_client 108.0.0.1 888 192.168.1.100 8388 --mode fast2
 $ sslocal -s 127.0.0.1 -p 8388 -k YOUR_SS_KEY
 ```
 
