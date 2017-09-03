@@ -14,19 +14,56 @@ Features
 * 请注意一个服务端进程对应一个客户端进程，如需建立多隧道或多客户端，请换个端口运行多个服务端进程。  
 * 暂时仅支持linux，可配置虚拟机并让真机连接至虚拟机。  
 
-Usage
------
-编译依赖：`libev-devel`, `openssl-devel`
+Compilation
+-----------
+编译依赖：`libev-devel`, `openssl-devel`, `automake`, `autoconf`
 ```
+$ ./autogen.sh
+$ ./configure
+$ make
+$ sudo make install
+```
+
+#### Openwrt编译指南：  
+依赖准备：
+```
+$ cd OpenWRT-SDK-XXX
+$ scripts/feeds update
+$ scripts/feeds install libev
+$ make menuconfig #勾选Libraries->libev
+$ make V=99
+```
+交叉编译：
+请参考 [Cross Compile](https://wiki.openwrt.org/doc/devel/crosscompile)  
+以ar71xx 15.05.1 SDK为例：
+```
+$ export PATH=$PATH:(your toolchain/bin directory here)
+$ export STAGING_DIR=(your staging_dir directory here)
+$ cd kcptun-raw
+$ ./autogen.sh
+$ ./configure --build=architecture-unknown-linux-gnu \
+--host=mips-openwrt-linux-uclibc \
+CFLAGS="-I${STAGING_DIR}/target-mips_34kc_uClibc-0.9.33.2/usr/include" \
+LDFLAGS="-L${STAGING_DIR}/target-mips_34kc_uClibc-0.9.33.2/usr/lib"
 $ make
 ```
+编译产出binary: `src/kcpraw_client` , `src/kcpraw_server`
 
+
+Usage
+-----
+服务端：
 ```
-# ./server TARGET_IP TARGET_PORT SERVER_IP SERVER_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
-# ./client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
+# iptables -A INPUT -p tcp --dport SERVER_PORT -j DROP
+# kcpraw_server TARGET_IP TARGET_PORT SERVER_IP SERVER_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
+```
+客户端：（其中 `LOCAL_IP` 为客户端本地网卡接口的IP，通常为路由器分配的内网IP）
+```
+# iptables -A INPUT -p tcp -s SERVER_IP --sport LISTEN_PORT -j DROP
+# kcpraw_client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--key 16_BYTES_KEY] [--mode MODE] [--noseq]
 ```
 
-Example:  
+#### 示例：
 将`108.0.0.1`替换为服务器IP，`192.168.1.100`替换为客户端IP（通常是路由器分配的内网IP，不能使用`127.0.0.1`）  
 服务端：
 ```
