@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
   vector_init(&open_connections_vector);
 
   if (argc < 5) {
-    printf("Usage: ./client_bin SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--mode MODE] [--key KEY] [--noseq]\n");
+    printf("Usage: kcpraw_client SERVER_IP SERVER_PORT LOCAL_IP LISTEN_PORT [--mode MODE] [--key KEY] [--noseq] [--bpf]\n");
     exit(1);
   }
 
