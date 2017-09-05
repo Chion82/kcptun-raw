@@ -27,7 +27,7 @@ char* pending_recv_stream = NULL;
 int pending_recv_stream_len = 0;
 ikcpcb *kcp = NULL;
 
-int bpf_enabled = 0;
+int bpf_enabled = 1;
 
 #ifndef SERVER
 int temp_port_sd = -1;
@@ -619,12 +619,12 @@ int iqueue_get_len(struct IQUEUEHEAD* queue) {
 }
 
 void enable_bpf(int argc, char* argv[]) {
-  bpf_enabled = 0;
+  bpf_enabled = 1;
   for(int i=0; i<argc; i++) {
     char* arg = argv[i];
-    if (!strcmp(arg, "--bpf")) {
-      LOG("BPF enabled.");
-      bpf_enabled = 1;
+    if (!strcmp(arg, "--nobpf")) {
+      LOG("BPF disabled.");
+      bpf_enabled = 0;
     }
   }
 }
