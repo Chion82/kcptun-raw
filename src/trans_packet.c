@@ -47,6 +47,10 @@ struct sock_filter code_tcp[] = {
 int code_tcp_port_index = 4;
 
 void init_bpf() {
+    if (!bpf_enabled) {
+        return;
+    }
+
     struct sock_fprog bpf;
 
     bpf.len = sizeof(code_tcp)/sizeof(code_tcp[0]);

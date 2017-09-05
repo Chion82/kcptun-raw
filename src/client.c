@@ -149,6 +149,7 @@ int main(int argc, char* argv[]) {
 
   init_kcp_mode(argc, argv);
   init_aes_key(argc, argv);
+  enable_bpf(argc, argv);
 
   for (int i=0; i<MAX_CONNECTIONS; i++) {
     connection_queue[i].in_use = 0;

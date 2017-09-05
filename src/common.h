@@ -83,6 +83,8 @@ struct ev_timer init_kcp_timer;
 
 struct kcp_config kcpconfig;
 
+int bpf_enabled;
+
 void init_kcp_mode(int argc, char* argv[]);
 
 unsigned int getclock();
@@ -107,4 +109,5 @@ int iqueue_get_len(struct IQUEUEHEAD* queue);
 
 int init_connect_to_socket();
 
+void enable_bpf(int argc, char* argv[]);
 void init_bpf();
