@@ -84,6 +84,7 @@ $ sslocal -s 127.0.0.1 -p 8388 -k YOUR_SS_KEY
 * `[--mode MODE]` 加速模式，取值为`normal/fast/fast2/fast3`。默认为`fast3`。  
 * `[--noseq]` 如果添加该参数，则取消伪TCP头的seq/ack自增，可避免部分ISP环境下的断流情况。  
 * `[--key 16_BYTES_KEY]` AES128密钥，长度必须为16字节。默认为`it is a secrect!`。  
+* `[--bpf]` 开启伯克利包过滤（BPF）模式。  
 
 分层示意图
 --------
