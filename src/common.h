@@ -1,5 +1,16 @@
 #include "vector.h"
 
+#ifdef HAVE_CONFIG_H
+  #include "config.h"
+  #ifdef HAVE_EV_H
+    #include <ev.h>
+  #else
+    #ifdef HAVE_LIBEV_EV_H
+      #include <libev/ev.h>
+    #endif
+  #endif
+#endif
+
 #define KCP_MTU (MTU - 40 - 4 - 20)
 #define BUFFER_SIZE (KCP_MTU - 30)
 #define KCP_MAX_WND_SIZE 1024
@@ -23,9 +34,9 @@
 #define is_valid_packet IS_VALID_PACKET
 
 struct fragment_header {
-  int conv;
+  unsigned int conv;
   char command; 
-  int length;
+  unsigned int length;
 };
 
 struct io_wrap {
@@ -95,3 +106,5 @@ void init_aes_key(int argc, char* argv[]);
 int iqueue_get_len(struct IQUEUEHEAD* queue);
 
 int init_connect_to_socket();
+
+void init_bpf();

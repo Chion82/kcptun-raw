@@ -8,7 +8,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <ev.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -142,9 +141,9 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
   struct fragment_header* command_header = (struct fragment_header*)buffer;
   bzero(command_header, sizeof(struct fragment_header));
-  command_header->conv = connection->conv;
+  command_header->conv = htonl(connection->conv);
   command_header->command = CONNECTION_PUSH;
-  command_header->length = fragment_payload_length;
+  command_header->length = htonl(fragment_payload_length);
 
   ikcp_send(kcp, buffer, sizeof(struct fragment_header) + fragment_payload_length);
 
@@ -250,7 +249,7 @@ void kcp_update_interval() {
 
   if (pending_recv_stream_len >= sizeof(struct fragment_header)) {
     struct fragment_header* command_header = (struct fragment_header*)pending_recv_stream;
-    if (pending_recv_stream_len >= sizeof(struct fragment_header) + command_header->length) {
+    if (pending_recv_stream_len >= sizeof(struct fragment_header) + ntohl(command_header->length)) {
       handle_recv_stream();
     }
   }
@@ -258,9 +257,9 @@ void kcp_update_interval() {
 
 void handle_recv_stream() {
   struct fragment_header* command_header = (struct fragment_header*)pending_recv_stream;
-  int fragment_payload_length = command_header->length;
+  int fragment_payload_length = ntohl(command_header->length);
   char* fragment_payload = (char*)command_header + sizeof(struct fragment_header);
-  int conv = command_header->conv;
+  int conv = ntohl(command_header->conv);
   struct connection_info* connection = &connection_queue[conv];
 
   switch(command_header->command) {
@@ -363,7 +362,7 @@ void handle_recv_stream() {
 void notify_remote_connect(struct connection_info* connection) {
   LOG("Notifying remote new connection. conv=%d", connection->conv);
   struct fragment_header command_header;
-  command_header.conv = connection->conv;
+  command_header.conv = htonl(connection->conv);
   command_header.command = CONNECTION_CONNECT;
   command_header.length = 0;
   ikcp_send(kcp, (char*)&command_header, sizeof(struct fragment_header));
@@ -372,7 +371,7 @@ void notify_remote_connect(struct connection_info* connection) {
 void notify_remote_close(struct connection_info* connection) {
   LOG("Notifying remote closing. conv=%d", connection->conv);
   struct fragment_header command_header;
-  command_header.conv = connection->conv;
+  command_header.conv = htonl(connection->conv);
   command_header.command = CONNECTION_CLOSE;
   command_header.length = 0;
   ikcp_send(kcp, (char*)&command_header, sizeof(struct fragment_header));
@@ -457,6 +456,7 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
       || listen(temp_port_sd, SOMAXCONN) != 0);
 
+    init_bpf();
     send_packet(&packetinfo, "", 0, FIRST_SYN);
     return;
   }
