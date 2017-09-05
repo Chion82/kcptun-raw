@@ -149,6 +149,8 @@ void read_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
   ikcp_send(kcp, buffer, sizeof(struct fragment_header) + fragment_payload_length);
 
+  kcp_update_interval();
+
 }
 
 void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
@@ -201,6 +203,16 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
   kcp_update_interval();
+
+  if (kcp && (iqueue_get_len(&(kcp->snd_queue)) > 10 || iqueue_get_len(&(kcp->rcv_queue)) > 10)) {
+    ev_timer_stop(loop, timer);
+    ev_timer_set(timer, 0.001, 0.001);
+    ev_timer_start(loop, timer);
+  } else {
+    ev_timer_stop(loop, timer);
+    ev_timer_set(timer, 0.01, 0.01);
+    ev_timer_start(loop, timer);
+  }
 }
 
 void kcp_update_interval() {
