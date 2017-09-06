@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   vector_init(&open_connections_vector);
 
   if (argc < 5) {
-    printf("Usage: kcpraw_server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [--mode MODE] [--key KEY] [--noseq] [--bpf]\n");
+    printf("Usage: kcpraw_server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [--mode MODE] [--key KEY] [--noseq] [--nobpf]\n");
     exit(1);
   }
 
