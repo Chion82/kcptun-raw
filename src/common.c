@@ -661,7 +661,7 @@ int update_src_addr() {
 
   char* src_ip = inet_ntoa(src_addr.sin_addr);
 
-  LOG("source ip: %s", src_ip);
+  // LOG("source ip: %s", src_ip);
 
   strcpy(packetinfo.source_ip, src_ip);
 
