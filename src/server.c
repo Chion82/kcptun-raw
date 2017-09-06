@@ -76,6 +76,8 @@ int main(int argc, char* argv[]) {
   validate_arg(argv[1], 128);
   validate_arg(argv[3], 128);
 
+  strcpy(server_bind_ip, argv[3]);
+
   last_recv_heart_beat = 0;
   last_kcp_recv = getclock();
 

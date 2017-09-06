@@ -157,6 +157,13 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
 
 #ifdef SERVER
+    struct in_addr to_addr;
+    to_addr.s_addr = iph->daddr;
+    if (strcmp(server_bind_ip, "0.0.0.0") && strcmp(server_bind_ip, inet_ntoa(to_addr))) {
+        return;
+    }
+    strcpy(packetinfo->source_ip, inet_ntoa(to_addr));
+
     if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
         // Server replies SYN + ACK
         (packetinfo->state).seq = 1;

@@ -85,6 +85,10 @@ struct kcp_config kcpconfig;
 
 int bpf_enabled;
 
+#ifdef SERVER
+char server_bind_ip[128];
+#endif
+
 void init_kcp_mode(int argc, char* argv[]);
 
 unsigned int getclock();
