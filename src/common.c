@@ -668,3 +668,10 @@ int update_src_addr() {
   close(probe_sock);
   return 0;
 }
+
+void validate_arg(const char* arg, int max_len) {
+  if (strlen(arg) > max_len) {
+    printf("Invalid argument: %s\n", arg);
+    exit(1);
+  }
+}
