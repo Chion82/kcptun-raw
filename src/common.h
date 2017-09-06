@@ -111,3 +111,4 @@ int init_connect_to_socket();
 
 void enable_bpf(int argc, char* argv[]);
 void init_bpf();
+int update_src_addr();

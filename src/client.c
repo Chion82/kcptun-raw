@@ -28,6 +28,7 @@
 // #define local_port 34567
 
 int tcp_listen_port;
+char bind_ip[128];
 
 int init_server_socket() {
   // Create server socket
@@ -43,7 +44,7 @@ int init_server_socket() {
   bzero(&addr, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(tcp_listen_port);
-  addr.sin_addr.s_addr = INADDR_ANY;
+  addr.sin_addr.s_addr = (!strcmp(bind_ip, "0.0.0.0")) ? INADDR_ANY : inet_addr(bind_ip);
 
   int option = 1;
   setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
@@ -175,6 +176,8 @@ int main(int argc, char* argv[]) {
       packetinfo.disable_seq_update = 1;
     }
   }
+
+  strcpy(bind_ip, argv[3]);
 
   int server_fd = init_server_socket();
 

@@ -470,6 +470,8 @@ void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int reven
     } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
       || listen(temp_port_sd, SOMAXCONN) != 0);
 
+    update_src_addr();
+
     init_bpf();
     send_packet(&packetinfo, "", 0, FIRST_SYN);
     return;
@@ -627,4 +629,42 @@ void enable_bpf(int argc, char* argv[]) {
       bpf_enabled = 0;
     }
   }
+}
+
+int update_src_addr() {
+  struct sockaddr_in remote_addr, src_addr;
+  memset(&remote_addr, 0x00, sizeof(struct sockaddr_in));
+  memset(&src_addr, 0x00, sizeof(struct sockaddr_in));
+
+  remote_addr.sin_family = AF_INET;
+  remote_addr.sin_port = htons(packetinfo.dest_port);
+  remote_addr.sin_addr.s_addr = inet_addr(packetinfo.dest_ip);
+
+  int probe_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (probe_sock < 0) {
+    LOG("WARNING: failed to create probe socket.");
+    return -1;
+  }
+
+  if (connect(probe_sock, (struct sockaddr*)&remote_addr, sizeof(remote_addr)) != 0) {
+    LOG("WARNING: failed to connect using probe socket.");
+    close(probe_sock);
+    return -1;
+  }
+
+  int addr_len = sizeof(src_addr);
+  if (getsockname(probe_sock, (struct sockaddr*)&src_addr, &addr_len) != 0) {
+    LOG("WARNING: failed to getsockname for probe socket.");
+    close(probe_sock);
+    return -1;
+  }
+
+  char* src_ip = inet_ntoa(src_addr.sin_addr);
+
+  LOG("source ip: %s", src_ip);
+
+  strcpy(packetinfo.source_ip, src_ip);
+
+  close(probe_sock);
+  return 0;
 }
