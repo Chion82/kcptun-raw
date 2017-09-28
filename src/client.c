@@ -29,6 +29,7 @@
 
 int tcp_listen_port;
 char bind_ip[128];
+int kcp_init_retry_count = 0;
 
 int init_server_socket() {
   // Create server socket
@@ -127,8 +128,13 @@ void accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
 }
 
 void re_init_kcp_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
+  kcp_init_retry_count++;
   LOG("Request kcp init");
   send_packet(&packetinfo, INIT_KCP, 8, 0);
+  if (kcp_init_retry_count > 5) {
+    reinit_fake_tcp();
+    kcp_init_retry_count = 0;
+  }
 }
 
 int main(int argc, char* argv[]) {

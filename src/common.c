@@ -92,6 +92,7 @@ void on_packet_recv(char* from_addr, uint16_t from_port, char* buffer, int lengt
 
 #ifndef SERVER
   if (packet_is_command(buffer, KCP_READY)) {
+    kcp_init_retry_count = 0;
     LOG("kcp ready.");
     init_kcp();
     ev_timer_stop(loop, &init_kcp_timer);
@@ -204,7 +205,7 @@ void write_cb(struct ev_loop *loop, struct ev_io *w_, int revents) {
 void kcp_update_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
   kcp_update_interval();
 
-  if (kcp && (iqueue_get_len(&(kcp->snd_queue)) > 10 || iqueue_get_len(&(kcp->rcv_queue)) > 10)) {
+  if (kcp && (getclock() - last_kcp_recv < KCP_RECV_TIMEOUT * 1000) && (iqueue_get_len(&(kcp->snd_queue)) > 10 || iqueue_get_len(&(kcp->rcv_queue)) > 10)) {
     ev_timer_stop(loop, timer);
     ev_timer_set(timer, 0.001, 0.001);
     ev_timer_start(loop, timer);
@@ -436,47 +437,50 @@ void packet_read_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
   kcp_update_interval();
 }
 
+#ifndef SERVER
+void reinit_fake_tcp() {
+  struct sockaddr_in temp_bind_addr;
+  
+  last_recv_heart_beat = getclock() - 3 * 1000;
+  (packetinfo.state).seq = 0;
+  (packetinfo.state).ack = 1;
+  LOG("Re-init fake TCP connection.");
+
+  do {
+    // Find an unused port by binding and listening.
+    // By this way we tell the kernel the port is occupied.
+    if (temp_port_sd != -1) {
+      close(temp_port_sd);
+    }
+    packetinfo.source_port = 30000 + rand() % 10000;
+
+    temp_port_sd = socket(PF_INET, SOCK_STREAM, 0);
+    bzero(&temp_bind_addr, sizeof(temp_bind_addr));
+    temp_bind_addr.sin_family = AF_INET;
+    temp_bind_addr.sin_port = htons(packetinfo.source_port);
+    temp_bind_addr.sin_addr.s_addr = INADDR_ANY;
+
+    LOG("Trying port %d", packetinfo.source_port);
+
+  } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
+    || listen(temp_port_sd, SOMAXCONN) != 0);
+
+  update_src_addr();
+
+  init_bpf();
+  send_packet(&packetinfo, "", 0, FIRST_SYN);
+}
+#endif
+
 void heart_beat_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents) {
   if (!strcmp(packetinfo.dest_ip, "0.0.0.0")) {
     return;
   }
 
 #ifndef SERVER
-
-  struct sockaddr_in temp_bind_addr;
-  
   if (getclock() - last_recv_heart_beat > HEART_BEAT_TIMEOUT * 1000) {
-    last_recv_heart_beat = getclock() - 3 * 1000;
-    (packetinfo.state).seq = 0;
-    (packetinfo.state).ack = 1;
-    LOG("Re-init fake TCP connection.");
-
-    do {
-      // Find an unused port by binding and listening.
-      // By this way we tell the kernel the port is occupied.
-      if (temp_port_sd != -1) {
-        close(temp_port_sd);
-      }
-      packetinfo.source_port = 30000 + rand() % 10000;
-
-      temp_port_sd = socket(PF_INET, SOCK_STREAM, 0);
-      bzero(&temp_bind_addr, sizeof(temp_bind_addr));
-      temp_bind_addr.sin_family = AF_INET;
-      temp_bind_addr.sin_port = htons(packetinfo.source_port);
-      temp_bind_addr.sin_addr.s_addr = INADDR_ANY;
-
-      LOG("Trying port %d", packetinfo.source_port);
-
-    } while (bind(temp_port_sd, (struct sockaddr*)&temp_bind_addr, sizeof(temp_bind_addr)) != 0
-      || listen(temp_port_sd, SOMAXCONN) != 0);
-
-    update_src_addr();
-
-    init_bpf();
-    send_packet(&packetinfo, "", 0, FIRST_SYN);
-    return;
+    reinit_fake_tcp();
   }
-
 #endif
 
   send_packet(&packetinfo, HEART_BEAT, 8, 0);
@@ -505,7 +509,6 @@ void kcp_nop_timer_cb(struct ev_loop *loop, struct ev_timer* timer, int revents)
 
     ikcp_release(kcp);
     kcp = NULL;
-
     ev_timer_start(loop, &init_kcp_timer);
   }
 #endif

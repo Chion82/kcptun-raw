@@ -89,6 +89,10 @@ int bpf_enabled;
 char server_bind_ip[128];
 #endif
 
+#ifndef SERVER
+int kcp_init_retry_count;
+#endif
+
 void init_kcp_mode(int argc, char* argv[]);
 
 unsigned int getclock();
@@ -118,3 +122,7 @@ void init_bpf();
 int update_src_addr();
 
 void validate_arg(const char* arg, int max_len);
+
+#ifndef SERVER
+void reinit_fake_tcp();
+#endif
