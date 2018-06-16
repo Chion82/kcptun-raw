@@ -164,7 +164,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
     }
     strcpy(packetinfo->source_ip, inet_ntoa(to_addr));
 
-    if (tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
+    if ((!packetinfo->syn_only) && tcph->syn == 1 && tcph->ack == 0 && tcph->psh == 0) {
         // Server replies SYN + ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
@@ -176,7 +176,7 @@ void check_packet_recv(struct packet_info* packetinfo) {
 #endif
 
 #ifndef SERVER
-    if (tcph->syn == 1 && tcph->ack == 1 && tcph->psh == 0) {
+    if ((!packetinfo->syn_only) && tcph->syn == 1 && tcph->ack == 1 && tcph->psh == 0) {
         //Client replies first ACK
         (packetinfo->state).seq = 1;
         (packetinfo->state).ack = 1;
@@ -311,12 +311,21 @@ int send_packet(struct packet_info* packetinfo, char* source_payload, int source
     tcph->seq = htonl((packetinfo->state).seq);
     tcph->ack_seq = htonl((packetinfo->state).ack);
     tcph->doff = 5;  //tcp header size
-    tcph->fin=0;
-    tcph->syn=0;
-    tcph->rst=0;
-    tcph->psh=1;
-    tcph->ack=1;
-    tcph->urg=0;
+    if (packetinfo->syn_only) {
+        tcph->fin=0;
+        tcph->syn=1;
+        tcph->rst=0;
+        tcph->psh=0;
+        tcph->ack=0;
+        tcph->urg=0;
+    } else {
+        tcph->fin=0;
+        tcph->syn=0;
+        tcph->rst=0;
+        tcph->psh=1;
+        tcph->ack=1;
+        tcph->urg=0;
+    }
     tcph->window = htons(129600);
     tcph->check = 0; //leave checksum 0 now, filled later by pseudo header
     tcph->urg_ptr = 0;

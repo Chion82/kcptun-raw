@@ -468,7 +468,9 @@ void reinit_fake_tcp() {
   update_src_addr();
 
   init_bpf();
-  send_packet(&packetinfo, "", 0, FIRST_SYN);
+
+  if (!packetinfo.syn_only)
+    send_packet(&packetinfo, "", 0, FIRST_SYN);
 }
 #endif
 

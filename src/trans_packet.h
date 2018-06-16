@@ -20,6 +20,7 @@ struct packet_info {
   int is_server;
   struct trans_packet_state state;
   int disable_seq_update;
+  int syn_only;
 };
 
 int packet_send_sd;

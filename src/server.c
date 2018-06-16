@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   vector_init(&open_connections_vector);
 
   if (argc < 5) {
-    printf("Usage: kcpraw_server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [--mode MODE] [--key KEY] [--noseq] [--nobpf]\n");
+    printf("Usage: kcpraw_server TCP_CONNECT_TO_IP TCP_CONNECT_TO_PORT SERVER_IP SERVER_PORT [--mode MODE] [--key KEY] [--noseq] [--syn-only] [--nobpf]\n");
     exit(1);
   }
 
@@ -105,11 +105,16 @@ int main(int argc, char* argv[]) {
   packetinfo.on_packet_recv = on_packet_recv;
   packetinfo.is_server = 1;
   packetinfo.disable_seq_update = 0;
+  packetinfo.syn_only = 0;
 
   for (int i=0; i<argc; i++) {
     if (!strcmp(argv[i], "--noseq")) {
       LOG("Disable TCP sequense counter.");
       packetinfo.disable_seq_update = 1;
+    }
+    if (!strcmp(argv[i], "--syn-only")) {
+      LOG("Use SYN-only mode");
+      packetinfo.syn_only = 1;
     }
   }
 
